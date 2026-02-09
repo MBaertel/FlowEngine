@@ -4,7 +4,7 @@ using System.Text;
 using TurnBasedEngine.Core.EventHandlers;
 using TurnBasedEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.EventBus
+namespace TurnBasedEngine.Core.Events.Bus
 {
     /// <summary>
     /// Event bus to handle Cross Cutting Communication Concerns.

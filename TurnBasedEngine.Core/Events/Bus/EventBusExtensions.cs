@@ -5,7 +5,7 @@ using System.Text;
 using TurnBasedEngine.Core.EventHandlers;
 using TurnBasedEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.EventBus
+namespace TurnBasedEngine.Core.Events.Bus
 {
     /// <summary>
     /// Helper Methods collected here to avoid polluting the IEventBus interface.

@@ -4,8 +4,8 @@ using System.Text;
 
 namespace TurnBasedEngine.Core.Commands
 {
-    public interface ICommandResolver
+    public interface ICommandRouter
     {
-        FlowStartRequest Resolve(ICommand command);
+        Task<TResult> RunCommand<TResult>(ICommand command);
     }
 }
