@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Orchestration;
+using FlowEngine.Engine.Steps;
 
 namespace FlowEngine.Engine
 {
@@ -22,6 +23,9 @@ namespace FlowEngine.Engine
             ConfigureServices(services);
 
             _serviceProvider = services.BuildServiceProvider();
+
+            _flowOrchestrator = Services.GetRequiredService<IFlowOrchestrator>();
+            _flowRegistry = Services.GetRequiredService<IFlowDefinitionRegistry>();
         }
 
         protected abstract void ConfigureServices(IServiceCollection services);
@@ -30,9 +34,10 @@ namespace FlowEngine.Engine
         {
             services.AddSingleton<IFlowDefinitionRegistry, FlowDefinitionRegistry>();
             services.AddSingleton<IFlowOrchestrator, FlowOrchestrator>();
+            services.AddSingleton<IStepFactory, StepFactory>();
         }
 
-        public Task TickAsync() =>
+        public Task<int> TickAsync() =>
             _flowOrchestrator.StepAllAsync();
 
         public void RegisterFlow(IFlowDefinition definition) =>

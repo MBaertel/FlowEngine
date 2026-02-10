@@ -12,12 +12,8 @@ namespace FlowEngine.Engine.Flows.Orchestration
     {
         Task<FlowValue> ExecuteFlowAsync(IFlowDefinition flow,FlowValue input);
         Task<TypedValue<TResult>?> ExecuteFlowAsync<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TypedValue<TInput> input);
-        Task<TypedValue<TResult?>> ExecuteFlowAsync<TResult>(IFlowDefinition<EmptyValue, TResult> flow);
-        Task ExecuteFlowAsync<TInput>(IFlowDefinition<TInput,EmptyValue> flow,TypedValue<TInput> input);
-        Task ExecuteFlowAsync(IFlowDefinition<EmptyValue,EmptyValue> flow);
 
-        Task StepAllAsync();
-
+        Task<int> StepAllAsync();
         IReadOnlyCollection<IFlowRunner> ActiveRunners { get; }
     }
 }

@@ -55,5 +55,10 @@ namespace FlowEngine.Core.Commands
                 return CommandBinding.Default;
             return binding;
         }
+
+        public Task<TResult> RunCommand<TInput, TResult>(ICommand<TInput, TResult> command)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

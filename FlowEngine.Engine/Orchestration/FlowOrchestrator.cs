@@ -2,34 +2,40 @@
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Text;
+using FlowEngine.Engine.Execution.Instances;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Execution;
 using FlowEngine.Engine.Flows.Values;
+using FlowEngine.Engine.Steps;
 
 namespace FlowEngine.Engine.Flows.Orchestration
 {
     public class FlowOrchestrator : IFlowOrchestrator
     {
         private readonly IFlowDefinitionRegistry _definitionRegistry;
+        private readonly IStepFactory _stepFactory;
 
         private readonly List<IFlowRunner> _activeRunners = new();
         public IReadOnlyCollection<IFlowRunner> ActiveRunners => _activeRunners.ToList().AsReadOnly();
 
-        public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry)
+        public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry,IStepFactory stepFactory)
         {
             _definitionRegistry = definitionRegistry;
+            _stepFactory = stepFactory;
         }
 
-        private async Task<FlowValue> ExecuteFlowInternalAsync(
+        public async Task<FlowValue> ExecuteFlowAsync(
             IFlowDefinition flowDefinition,
             FlowValue input)
         {
             var context = new FlowContext(this,_definitionRegistry, input);
-            var runner = new FlowRunner<FlowValue>(context, flowDefinition.Flow);
+            var instance = new FlowInstance(_stepFactory, flowDefinition.Flow);
+            var runner = new FlowRunner<FlowValue>(instance,context);
 
+            _activeRunners.Add(runner);
+            
             try
             {
-                _activeRunners.Add(runner);
                 return await runner.WaitForCompletion();
             }
             finally
@@ -43,42 +49,20 @@ namespace FlowEngine.Engine.Flows.Orchestration
             IFlowDefinition<TInput, TResult> flow, 
             TypedValue<TInput> input)
         {
-            FlowValue result = await ExecuteFlowInternalAsync(flow, input);
+            FlowValue result = await ExecuteFlowAsync(flow, input);
             return result as TypedValue<TResult>;
         }
 
-        //Output Only
-        public async Task<TypedValue<TResult?>> ExecuteFlowAsync<TResult>(
-            IFlowDefinition<EmptyValue, TResult> flow)
+        public async Task<int> StepAllAsync()
         {
-            FlowValue result = await ExecuteFlowInternalAsync(flow, FlowValue.Empty);
-            return result as TypedValue<TResult>;
-        }
-
-        //Input Only
-        public async Task ExecuteFlowAsync<TInput>(IFlowDefinition<TInput, EmptyValue> flow, TypedValue<TInput> input)
-        {
-            await ExecuteFlowInternalAsync(flow, input);
-        }
-
-        //No Input or Output
-        public async Task ExecuteFlowAsync(IFlowDefinition<EmptyValue, EmptyValue> flow)
-        {
-            await ExecuteFlowInternalAsync(flow, FlowValue.Empty);
-        }
-
-        public async Task<FlowValue> ExecuteFlowAsync(IFlowDefinition flow, FlowValue input)
-        {
-            return await ExecuteFlowInternalAsync(flow, input);
-        }
-
-        public async Task StepAllAsync()
-        {
-            foreach (var runner in _activeRunners)
+            int ran = 0;
+            foreach (var runner in _activeRunners.ToArray())
             {
                 if(!runner.IsWaiting)
+                    ran++;
                     await runner.StepAsync();
             }
+            return ran;
         }
     }
 }

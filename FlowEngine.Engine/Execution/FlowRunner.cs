@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using FlowEngine.Engine.Execution.Instances;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
 using FlowEngine.Engine.Flows.Orchestration;
@@ -17,35 +18,39 @@ namespace FlowEngine.Engine.Flows.Execution
 
         private bool _isWaiting;
         private bool _isCompleted;
-        private Steps.IFlowStep _currentStep;
-        private FlowTransformer? _currentTransformer;
+
+        private IFlowStep _currentStep;
+        private Guid _currentStepId;
+        private FlowValue _currentInput;
 
         public bool IsWaiting => _isWaiting;
         public bool IsCompleted => _isCompleted;
 
-        public FlowGraph Flow { get; }
+        public IFlowInstance Flow { get; }
         public IFlowContext Context { get; }
 
-        public FlowRunner(IFlowContext context,FlowGraph graph)
+        public FlowRunner(IFlowInstance instance,IFlowContext context)
         {
             Context = context;
-            Flow = graph;
+            Flow = instance;
 
-            _currentStep = graph.GetStartStep();
+            _currentStepId = instance.StartStepId;
+            _currentStep = instance.GetStep(_currentStepId);
+            _currentInput = context.Payload;
         }
 
         public async Task StepAsync()
         {
             if (_isCompleted || _isWaiting) return;
             
-            _isWaiting = true;
-            var input = _currentTransformer != null ? _currentTransformer.Transform(Context,Context.Payload) : Context.Payload; 
-            var stepResult = await _currentStep.ExecuteAsync(Context, input);
+            _isWaiting = true; 
+            var stepResult = await _currentStep.ExecuteAsync(Context, _currentInput);
             _isWaiting = false;
 
             Context.Payload = stepResult;
-            var next = Flow.GetNextStep(_currentStep.Id, Context);
-            if(next.step == null)
+            var next = Flow.ResolveNext(_currentStepId,Context);
+
+            if(next == null)
             {
                 _isCompleted = true;
                 if (Context.Payload is not TResult typed)
@@ -55,8 +60,9 @@ namespace FlowEngine.Engine.Flows.Execution
             }
             else
             {
-                _currentStep = next.step;
-                _currentTransformer = next.transformer;
+                _currentStep = next.Step;
+                _currentInput = next.Input;
+                _currentStepId = next.StepNodeId;
             }
         }
 

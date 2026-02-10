@@ -15,7 +15,7 @@ namespace FlowEngine.Engine.Flows.Steps
 
     public interface IFlowStep<TInput,TOutput> : IFlowStep
     {
-        new Task<TOutput> ExecuteAsync(IFlowContext ctx,FlowValue input);
+        new Task<FlowValue> ExecuteAsync(IFlowContext ctx,FlowValue input);
     }
     
 }

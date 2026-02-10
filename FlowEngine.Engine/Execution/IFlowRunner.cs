@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using FlowEngine.Engine.Execution.Instances;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
 using FlowEngine.Engine.Flows.Orchestration;
@@ -13,7 +14,7 @@ namespace FlowEngine.Engine.Flows.Execution
     public interface IFlowRunner
     {
         public bool IsWaiting { get; }
-        public FlowGraph Flow { get; }
+        public IFlowInstance Flow { get; }
         public IFlowContext Context { get; }
 
         Task<object?> WaitForCompletion();

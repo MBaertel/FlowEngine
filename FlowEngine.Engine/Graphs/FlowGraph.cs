@@ -53,7 +53,7 @@ namespace FlowEngine.Engine.Flows.Graphs
         }
 
 
-        private FlowEdge? GetNextEdge(Guid currentId,IFlowContext context)
+        public FlowEdge? GetNextEdge(Guid currentId,IFlowContext context)
         {
             var transitions = _edgesByNodeId[currentId];
             foreach (var transition in transitions)
@@ -64,32 +64,18 @@ namespace FlowEngine.Engine.Flows.Graphs
             return null;
         }
 
-        private Steps.IFlowStep? GetStep(Guid nodeId)
+        public FlowTransformer? GetTransformer(Guid edgeId)
         {
-            if (_nodesById.TryGetValue(nodeId, out var node))
-                return node.StepType;
-            return null;
-        }
-
-        private FlowTransformer? GetTransformer(Guid edgeId)
-        {
-            if (_transformersByEdgeId.TryGetValue(edgeId, out var transformer))
+            if(_transformersByEdgeId.TryGetValue(edgeId, out var transformer))
                 return transformer;
             return null;
         }
 
-        public (IFlowStep? step,FlowTransformer? transformer) GetNextStep(Guid currentStepId,IFlowContext ctx)
+        public FlowNode? GetStep(Guid nodeId)
         {
-            var edge = GetNextEdge(currentStepId, ctx);
-            var step = GetStep(edge.ToNodeId);
-            var transformer = GetTransformer(edge.Id);
-
-            return (step, transformer);
-        }
-
-        public IFlowStep GetStartStep()
-        {
-            return _nodesById[StartNodeId].Step;
+            if (_nodesById.TryGetValue(nodeId, out var node))
+                return node;
+            return null;
         }
 
         private void Validate()

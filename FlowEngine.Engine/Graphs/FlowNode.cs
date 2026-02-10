@@ -13,8 +13,6 @@ namespace FlowEngine.Engine.Flows.Graphs
 
         public Type StepType { get; }
 
-        public IFlowStep Step { get; set; }
-
         public FlowNode(Guid id, Type step)
         {
             Id = id;

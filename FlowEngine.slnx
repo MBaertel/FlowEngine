@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="EngineTests/EngineTests.csproj" Id="66c1542f-a3fc-4751-8a5a-a295e911de3b" />
-  <Project Path="FlowEngine.Engine/FlowEngine.Engine.csproj" Id="810d626c-e157-4be4-a7f7-e7c233834203" />
-  <Project Path="TurnBasedEngine.Core/FlowEngine.Core.csproj" />
+  <Project Path="FlowEngine.Core/FlowEngine.Core.csproj" />
+  <Project Path="FlowEngine.Engine/FlowEngine.Engine.csproj" />
+  <Project Path="FlowEngine.Tests/FlowEngine.Tests.csproj" Id="bb6394e9-56a7-4b2d-b989-c853ec4c7836" />
 </Solution>
