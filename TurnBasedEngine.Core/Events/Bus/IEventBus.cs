@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.EventHandlers;
-using TurnBasedEngine.Core.Events;
+using FlowEngine.Core.EventHandlers;
+using FlowEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.Events.Bus
+namespace FlowEngine.Core.Events.Bus
 {
     /// <summary>
     /// Event bus to handle Cross Cutting Communication Concerns.
@@ -16,28 +16,28 @@ namespace TurnBasedEngine.Core.Events.Bus
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid Subscribe<TEvent>(IEventHandler handler)
-            where TEvent : IGameEvent;
+            where TEvent : IEvent;
 
         /// <summary>
         /// Subscribe to the Event Bus with a Generic Handler.
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid Subscribe<TEvent>(IEventHandler<TEvent> handler)
-            where TEvent : IGameEvent;
+            where TEvent : IEvent;
 
         /// <summary>
         /// Subscribe to the Event Bus with a non-generic Async Handler.
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid SubscribeAsync<TEvent>(IAsyncEventHandler handler)
-            where TEvent : IGameEvent;
+            where TEvent : IEvent;
 
         /// <summary>
         /// Subscribe to the Event Bus with a Generic Async Handler.
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid SubscribeAsync<TEvent>(IAsyncEventHandler<TEvent> handler)
-            where TEvent : IGameEvent;
+            where TEvent : IEvent;
 
         /// <summary>
         /// Unsubscribe from the bus via Handler Reference.
@@ -52,11 +52,11 @@ namespace TurnBasedEngine.Core.Events.Bus
         /// <summary>
         /// Publish an event Synchronously.
         /// </summary>
-        void Publish(IGameEvent evt);
+        void Publish(IEvent evt);
 
         /// <summary>
         /// Publish an event Asynchronously.
         /// </summary>
-        Task PublishAsync(IGameEvent evt,CancellationToken cancellationToken = default);
+        Task PublishAsync(IEvent evt,CancellationToken cancellationToken = default);
     }
 }

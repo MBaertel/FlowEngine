@@ -1,4 +1,0 @@
-<Solution>
-  <Project Path="EngineTests/EngineTests.csproj" Id="66c1542f-a3fc-4751-8a5a-a295e911de3b" />
-  <Project Path="TurnBasedEngine.Core/TurnBasedEngine.Core.csproj" />
-</Solution>

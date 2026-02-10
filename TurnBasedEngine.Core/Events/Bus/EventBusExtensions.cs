@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using TurnBasedEngine.Core.EventHandlers;
-using TurnBasedEngine.Core.Events;
+using FlowEngine.Core.EventHandlers;
+using FlowEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.Events.Bus
+namespace FlowEngine.Core.Events.Bus
 {
     /// <summary>
     /// Helper Methods collected here to avoid polluting the IEventBus interface.
@@ -16,7 +16,7 @@ namespace TurnBasedEngine.Core.Events.Bus
         /// Subscribe Passthrough method to subscribe directly with a lambda.
         /// </summary>
         public static Guid Subscribe<TEvent>(this IEventBus eventBus,Action<TEvent> lambda)
-            where TEvent : IGameEvent
+            where TEvent : IEvent
         {
             var handler = new LambdaEventHandler<TEvent>(lambda);
             return eventBus.Subscribe(handler);
@@ -26,7 +26,7 @@ namespace TurnBasedEngine.Core.Events.Bus
         /// SubscribeAsync Passthrough method to subscribe directly with a lambda.
         /// </summary>
         public static Guid SubscribeAsync<TEvent>(this IEventBus eventBus,Func<TEvent,Task> lambda)
-            where TEvent : IGameEvent
+            where TEvent : IEvent
         {
             var handler = new AsyncLambdaHandler<TEvent>(lambda);
             return eventBus.SubscribeAsync(handler);

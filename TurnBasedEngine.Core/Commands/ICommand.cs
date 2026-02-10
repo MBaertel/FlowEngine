@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.Flows.Values;
+using FlowEngine.Engine.Flows.Values;
 
-namespace TurnBasedEngine.Core.Commands
+namespace FlowEngine.Core.Commands
 {
     public interface ICommand
     {
         string FlowName { get; }
-        object? CommandValue { get; }
+        object? InputValue { get; }
+        Type ValueType { get; }
     }
 
-    public interface ICommand<TCommand> : ICommand
+    public interface ICommand<TInput,TOutput> : ICommand
     {
-        new TCommand CommandValue { get; }
+        new TInput InputValue { get; }
     }
 }

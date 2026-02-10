@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.Events;
+using FlowEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.EventHandlers
+namespace FlowEngine.Core.EventHandlers
 {
     public abstract class EventHandlerBase<TEvent>
         : IEventHandler<TEvent>
-        where TEvent : IGameEvent
+        where TEvent : IEvent
     {
-        public bool CanHandle(IGameEvent evt) =>
+        public bool CanHandle(IEvent evt) =>
             typeof(TEvent).IsAssignableFrom(evt.GetType());
 
         public abstract void Handle(TEvent evt);
 
-        public void Handle(IGameEvent evt)
+        public void Handle(IEvent evt)
         {
             if(CanHandle(evt) && evt is TEvent tevt)
                 Handle(tevt);

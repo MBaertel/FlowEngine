@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.Events;
+using FlowEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.EventHandlers
+namespace FlowEngine.Core.EventHandlers
 {
     public interface IEventHandler
     {
-        bool CanHandle(IGameEvent evt);
-        void Handle(IGameEvent evt);
+        bool CanHandle(IEvent evt);
+        void Handle(IEvent evt);
     }
 
     public interface IEventHandler<TEvent>
         : IEventHandler
-        where TEvent : IGameEvent
+        where TEvent : IEvent
     {
         void Handle(TEvent evt);
     }

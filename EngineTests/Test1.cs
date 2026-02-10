@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using TurnBasedEngine.Core;
-using TurnBasedEngine.Core.Commands;
-using TurnBasedEngine.Core.Flows.Definitions;
-using TurnBasedEngine.Core.Flows.Orchestration;
+using FlowEngine.Engine;
+using FlowEngine.Core.Commands;
+using FlowEngine.Engine.Flows.Definitions;
+using FlowEngine.Engine.Flows.Orchestration;
 
 namespace EngineTests
 {
@@ -15,13 +15,9 @@ namespace EngineTests
             var engine = new Engine();
 
             var orchestrator = engine.Orchestrator;
-            var eventBus = engine.EventBus;
-            var commandRouter = engine.Services.GetRequiredService<ICommandRouter>();
             var flowRegistry = engine.Services.GetRequiredService<IFlowDefinitionRegistry>();
             
             Assert.IsNotNull(orchestrator);
-            Assert.IsNotNull(eventBus);
-            Assert.IsNotNull(commandRouter);
             Assert.IsNotNull(flowRegistry);
         }
     }

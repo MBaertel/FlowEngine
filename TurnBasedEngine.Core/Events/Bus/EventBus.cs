@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.EventHandlers;
-using TurnBasedEngine.Core.Events;
+using FlowEngine.Core.EventHandlers;
+using FlowEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.Events.Bus
+namespace FlowEngine.Core.Events.Bus
 {
     public class EventBus : IEventBus
     {
@@ -12,7 +12,7 @@ namespace TurnBasedEngine.Core.Events.Bus
         private readonly List<IAsyncEventHandler> _asyncHandlers = new();
         private readonly Dictionary<Guid, IEventHandler> _handlerIds = new();
 
-        public void Publish(IGameEvent evt)
+        public void Publish(IEvent evt)
         {
             foreach (var handler in _syncHandlers)
             {
@@ -21,7 +21,7 @@ namespace TurnBasedEngine.Core.Events.Bus
             }
         }
 
-        public async Task PublishAsync(IGameEvent evt, CancellationToken cancellationToken = default)
+        public async Task PublishAsync(IEvent evt, CancellationToken cancellationToken = default)
         {
             foreach(var handler in _asyncHandlers)
             {
@@ -31,7 +31,7 @@ namespace TurnBasedEngine.Core.Events.Bus
         }
 
         public Guid Subscribe<TEvent>(IEventHandler handler) 
-            where TEvent : IGameEvent
+            where TEvent : IEvent
         {
             if(!_syncHandlers.Contains(handler))
                 _syncHandlers.Add(handler);
@@ -41,12 +41,12 @@ namespace TurnBasedEngine.Core.Events.Bus
             return newId;
         }
 
-        public Guid Subscribe<TEvent>(IEventHandler<TEvent> handler) where TEvent : IGameEvent
+        public Guid Subscribe<TEvent>(IEventHandler<TEvent> handler) where TEvent : IEvent
         {
             return Subscribe<TEvent>(handler as IEventHandler);
         }
 
-        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler handler) where TEvent : IGameEvent
+        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler handler) where TEvent : IEvent
         {
             if (!_asyncHandlers.Contains(handler))
                 _asyncHandlers.Add(handler);
@@ -56,7 +56,7 @@ namespace TurnBasedEngine.Core.Events.Bus
             return newId;
         }
 
-        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler<TEvent> handler) where TEvent : IGameEvent
+        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler<TEvent> handler) where TEvent : IEvent
         {
             return Subscribe<TEvent>(handler as IAsyncEventHandler);
         }

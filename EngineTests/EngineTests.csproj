@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TurnBasedEngine.Core\TurnBasedEngine.Core.csproj" />
+    <ProjectReference Include="..\TurnBasedEngine.Core\FlowEngine.Core.csproj" />
   </ItemGroup>
 
 </Project>

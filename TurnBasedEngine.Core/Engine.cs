@@ -1,39 +1,33 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FlowEngine.Core.Commands;
+using FlowEngine.Core.Events.Bus;
+using FlowEngine.Engine;
+using FlowEngine.Engine.Flows.Orchestration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.Commands;
-using TurnBasedEngine.Core.Events.Bus;
-using TurnBasedEngine.Core.Flows.Definitions;
-using TurnBasedEngine.Core.Flows.Orchestration;
 
-namespace TurnBasedEngine.Core
+namespace FlowEngine.Core
 {
-    public class Engine
+    public class Engine : EngineBase
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly ICommandRouter _commandRouter;
 
-        public IFlowOrchestrator Orchestrator { get; }
-        public IEventBus EventBus { get; }
-        public IServiceProvider Services => _serviceProvider;
-
-        public Engine()
+        protected override void ConfigureServices(IServiceCollection services)
         {
-            var services = new ServiceCollection();
-            _serviceProvider = ConfigureServices(services);
-
-            Orchestrator = _serviceProvider.GetRequiredService<IFlowOrchestrator>();
-            EventBus = _serviceProvider.GetRequiredService<IEventBus>();
+            services.AddSingleton<IEventBus, EventBus>();
+            services.AddSingleton<ICommandRouter, CommandRouter>();
         }
 
-        private IServiceProvider ConfigureServices(IServiceCollection serviceCollection)
-        {
-            serviceCollection.AddSingleton<IFlowDefinitionRegistry, FlowDefinitionRegistry>();
-            serviceCollection.AddSingleton<IFlowOrchestrator,FlowOrchestrator>();
-            serviceCollection.AddSingleton<ICommandRouter,CommandRouter>();
-            serviceCollection.AddSingleton<IEventBus, EventBus>();
+        public async Task<TResult> RunCommand<TResult>(ICommand command) =>
+            await _commandRouter.RunCommand<TResult>(command);
 
-            return serviceCollection.BuildServiceProvider();
-        }
+        public async Task<TResult> RunCommand<TInput,TResult>(ICommand<TInput,TResult> command) =>
+            await _commandRouter.RunCommand<TInput,TResult>(command);
+
+        public void RegisterCommandBinding<TCommand, TCommandIn, TFlowIn>(Func<TCommandIn, TFlowIn> adapter) 
+            where TCommand : ICommand
+            where TFlowIn : notnull 
+            => _commandRouter.Register<TCommand, TCommandIn, TFlowIn>(adapter);
     }
 }

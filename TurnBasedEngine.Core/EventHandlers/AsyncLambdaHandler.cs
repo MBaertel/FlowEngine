@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TurnBasedEngine.Core.Events;
+using FlowEngine.Core.Events;
 
-namespace TurnBasedEngine.Core.EventHandlers
+namespace FlowEngine.Core.EventHandlers
 {
     public class AsyncLambdaHandler<TEvent>
         : AsyncEventHandlerBase<TEvent>
-        where TEvent : IGameEvent
+        where TEvent : IEvent
     {
         private readonly Func<TEvent, CancellationToken, Task> _lambda;
         public AsyncLambdaHandler(Func<TEvent,Task> lambda)
