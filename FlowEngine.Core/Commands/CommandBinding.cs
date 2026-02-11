@@ -5,17 +5,20 @@ using System.Text;
 
 namespace FlowEngine.Core.Commands
 {
-    public class CommandBinding
+    public class CommandBinding<TIn>
     {
         public Type CommandType { get; }
-        public Func<object?, FlowValue> InputAdapter { get; }
 
-        public static CommandBinding Default => new CommandBinding(typeof(ICommand),x => FlowValue.Wrap(x));
+        public Type CommandInputType => typeof(TIn);
 
-        public CommandBinding(Type commandType, Func<object?, FlowValue> inputAdapter)
+        public Func<TIn,object>? InputAdapter { get; }
+
+        public CommandBinding(Type commandType, Func<TIn, object>? inputAdapter = null)
         {
             CommandType = commandType;
             InputAdapter = inputAdapter;
         }
     }
+
+
 }

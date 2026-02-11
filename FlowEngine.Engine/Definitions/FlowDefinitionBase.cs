@@ -6,10 +6,12 @@ using System.Text;
 
 namespace FlowEngine.Engine.Definitions
 {
-    public abstract class FlowDefinitionBase : IFlowDefinition
+    public abstract class FlowDefinitionBase<TInput,TOutput> : IFlowDefinition<TInput,TOutput>
     {
-        public virtual Guid Id { get; } = Guid.NewGuid();
+        public Type InputType => typeof(TInput);
+        public Type OutputType => typeof(TOutput);
 
+        public virtual Guid Id { get; } = Guid.NewGuid();
         public abstract string Name { get; }
 
         public FlowGraph Flow { get; private set; }

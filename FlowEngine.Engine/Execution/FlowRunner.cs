@@ -8,26 +8,28 @@ using FlowEngine.Engine.Flows.Graphs;
 using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Flows.Steps;
 using FlowEngine.Engine.Flows.Values;
+using FlowEngine.Engine.Values;
 
 namespace FlowEngine.Engine.Flows.Execution
 {
-    public class FlowRunner<TResult> : IFlowRunner<TResult>
-        where TResult : FlowValue
+    public class FlowRunner<TIn,TResult> : IFlowRunner<TIn,TResult>
     {
-        private TaskCompletionSource<TResult>? _completionSource;
+        private TaskCompletionSource<TResult>? _tcs = 
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private bool _isWaiting;
         private bool _isCompleted;
+        private FlowWait _currentWait;
 
         private IFlowStep _currentStep;
         private Guid _currentStepId;
-        private FlowValue _currentInput;
 
         public bool IsWaiting => _isWaiting;
         public bool IsCompleted => _isCompleted;
 
         public IFlowInstance Flow { get; }
         public IFlowContext Context { get; }
+        public Guid Id { get; }
 
         public FlowRunner(IFlowInstance instance,IFlowContext context)
         {
@@ -36,49 +38,73 @@ namespace FlowEngine.Engine.Flows.Execution
 
             _currentStepId = instance.StartStepId;
             _currentStep = instance.GetStep(_currentStepId);
-            _currentInput = context.Payload;
         }
 
-        public async Task StepAsync()
+        public async ValueTask StepAsync()
         {
             if (_isCompleted || _isWaiting) return;
             
-            _isWaiting = true; 
-            var stepResult = await _currentStep.ExecuteAsync(Context, _currentInput);
+            _isWaiting = true;
+            var stepResult = await _currentStep.ExecuteAsyncUntyped(Context, Context.Payload);
+
+            if(stepResult is FlowWait wait)
+            {
+                _currentWait = wait;
+                stepResult = await wait.WaitForCompletion();
+            }
             _isWaiting = false;
 
             Context.Payload = stepResult;
-            var next = Flow.ResolveNext(_currentStepId,Context);
 
-            if(next == null)
+            var next = Flow.ResolveNext(_currentStepId, Context);
+
+            if (next == null)
             {
                 _isCompleted = true;
                 if (Context.Payload is not TResult typed)
                     throw new InvalidOperationException($"Flow completed with {Context.Payload.GetType()}, expected {typeof(TResult)}");
-                _completionSource?.TrySetResult(typed);
+                _tcs?.TrySetResult(typed);
                 return;
             }
             else
             {
                 _currentStep = next.Step;
-                _currentInput = next.Input;
                 _currentStepId = next.StepNodeId;
+                Context.Payload = next.Input;
             }
         }
 
         public Task<TResult> WaitForCompletion()
         {
-            if(IsCompleted)
-            {
-                if(Context.Payload is TResult typed)
-                    return Task.FromResult(typed);
-            }
+            if (_isCompleted)
+                return Task.FromResult((TResult)Context.Payload!);
 
-            _completionSource ??= new TaskCompletionSource<TResult>();
-            return _completionSource.Task;
+            _tcs ??= new TaskCompletionSource<TResult>();
+            return _tcs.Task;
         }
 
         Task<object?> IFlowRunner.WaitForCompletion() =>
             WaitForCompletion().ContinueWith(t => (object?) t.Result);
+
+        private async Task ResumeAfterSubflow(FlowWait wait)
+        {
+            try
+            {
+                var stepResult = await wait.WaitForCompletion();
+                _currentWait = null;
+                _isWaiting = false;
+                Advance(stepResult);
+            }
+            catch (Exception e)
+            {
+                _isCompleted = true;
+                _tcs?.TrySetException(e);
+            }
+        }
+
+        private void Advance(object stepResult)
+        {
+
+        }
     }
 }

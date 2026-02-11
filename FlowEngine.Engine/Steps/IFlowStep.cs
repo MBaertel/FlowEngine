@@ -8,14 +8,14 @@ namespace FlowEngine.Engine.Flows.Steps
 {
     public interface IFlowStep
     {
-        Guid Id { get; }
-        Task<FlowValue> ExecuteAsync(IFlowContext ctx,FlowValue input);
-        void Undo(FlowValue input,FlowValue output);
+        Task<object> ExecuteAsyncUntyped(IFlowContext ctx,object input);
+        void UndoUntyped(object input,object output);
     }
 
     public interface IFlowStep<TInput,TOutput> : IFlowStep
     {
-        new Task<FlowValue> ExecuteAsync(IFlowContext ctx,FlowValue input);
+        new Task<TOutput> ExecuteAsync(IFlowContext ctx,TInput input);
+        void Undo(TInput input,TOutput output);
     }
     
 }

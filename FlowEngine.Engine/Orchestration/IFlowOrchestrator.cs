@@ -10,10 +10,9 @@ namespace FlowEngine.Engine.Flows.Orchestration
 {
     public interface IFlowOrchestrator
     {
-        Task<FlowValue> ExecuteFlowAsync(IFlowDefinition flow,FlowValue input);
-        Task<TypedValue<TResult>?> ExecuteFlowAsync<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TypedValue<TInput> input);
-
-        Task<int> StepAllAsync();
+        Task StepAllAsync();
         IReadOnlyCollection<IFlowRunner> ActiveRunners { get; }
+        Task<object> ExecuteFlowUntypedAsync(IFlowDefinition flow, object input);
+        Task<TResult> ExecuteFlowAsync<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TInput input);
     }
 }

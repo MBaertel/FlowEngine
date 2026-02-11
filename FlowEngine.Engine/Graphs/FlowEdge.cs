@@ -11,13 +11,13 @@ namespace FlowEngine.Engine.Flows.Graphs
         public Guid Id { get; }
         public Guid FromNodeId { get; }
         public Guid ToNodeId { get; }
-        private Func<IFlowContext,FlowValue,bool>? _condition { get; }
+        private Func<IFlowContext,object,bool>? _condition { get; }
 
         public FlowEdge(
             Guid id,
             Guid fromNodeId, 
             Guid toNodeId, 
-            Func<IFlowContext,FlowValue, bool>? condition = null)
+            Func<IFlowContext,object, bool>? condition = null)
         {
             Id = id;
             FromNodeId = fromNodeId;
@@ -25,7 +25,7 @@ namespace FlowEngine.Engine.Flows.Graphs
             _condition = condition;
         }
 
-        public bool CanTransition(IFlowContext ctx,FlowValue payload)
+        public bool CanTransition(IFlowContext ctx,object payload)
             => _condition?.Invoke(ctx,payload) ?? true;
     }
 }

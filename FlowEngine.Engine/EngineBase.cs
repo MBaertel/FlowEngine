@@ -37,7 +37,7 @@ namespace FlowEngine.Engine
             services.AddSingleton<IStepFactory, StepFactory>();
         }
 
-        public Task<int> TickAsync() =>
+        public Task TickAsync() =>
             _flowOrchestrator.StepAllAsync();
 
         public void RegisterFlow(IFlowDefinition definition) =>

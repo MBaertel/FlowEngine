@@ -8,9 +8,11 @@ namespace FlowEngine.Engine.Flows.Orchestration
 {
     public interface IFlowContext
     {
-        public FlowValue Payload { get; set; }
+        public object Payload { get; set; }
 
-        Task<FlowValue> ExecuteSubFlow(IFlowDefinition definition,FlowValue data);
+        Task<TResult> ExecuteSubFlow<TInput,TResult>(IFlowDefinition<TInput,TResult> definition,TInput input);
+        Task<object> ExecuteSubFlow(IFlowDefinition definition, object? input);
+
         IFlowDefinition? ResolveFlowDefinitionByName(string name);
         IFlowDefinition? ResolveFlowDefinitionById(Guid id);
 

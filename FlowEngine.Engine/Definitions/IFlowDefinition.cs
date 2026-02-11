@@ -13,11 +13,12 @@ namespace FlowEngine.Engine.Flows.Definitions
         Guid Id { get; }
         string Name { get; }
         FlowGraph Flow { get; }
+        
+        Type InputType { get; }
+        Type OutputType { get; }
     }
 
     public interface IFlowDefinition<TIn,TOut> : IFlowDefinition
     {
-        Type InputType { get; }
-        Type OutputType { get; }
     }
 }

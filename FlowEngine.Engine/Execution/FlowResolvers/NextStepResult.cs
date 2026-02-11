@@ -9,5 +9,5 @@ namespace FlowEngine.Engine.Execution.Instances
     public sealed record NextStepResult (
         Guid StepNodeId,
         IFlowStep Step,
-        FlowValue Input);
+        object Input);
 }

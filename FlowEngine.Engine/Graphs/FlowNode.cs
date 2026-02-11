@@ -7,7 +7,7 @@ using FlowEngine.Engine.Flows.Values;
 
 namespace FlowEngine.Engine.Flows.Graphs
 {
-    public class FlowNode
+    public sealed class FlowNode
     {
         public Guid Id { get; }
 
@@ -18,12 +18,11 @@ namespace FlowEngine.Engine.Flows.Graphs
             Id = id;
             StepType = step;
         }
-    }
 
-    public sealed class FlowNode<TStep> : FlowNode
-        where TStep : IFlowStep
-    {
-        public FlowNode(Guid id)
-        :base(id,typeof(TStep)) { }
+        public FlowNode From<TStep>(Guid id,TStep step)
+            where TStep : IFlowStep
+        {
+            return new FlowNode(id, typeof(TStep));
+        }
     }
 }

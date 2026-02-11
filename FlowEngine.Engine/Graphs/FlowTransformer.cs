@@ -10,17 +10,17 @@ namespace FlowEngine.Engine.Flows.Graphs
     {
         public Guid EdgeId { get; }
 
-        private readonly Func<IFlowContext, FlowValue,FlowValue> _transformFunction;
+        private readonly Func<IFlowContext, object,object> _transformFunction;
 
         public FlowTransformer(
             Guid edgeId,
-            Func<IFlowContext, FlowValue,FlowValue> transformFunction)
+            Func<IFlowContext, object,object> transformFunction)
         {
             EdgeId = edgeId;
             _transformFunction = transformFunction;
         }
 
-        public FlowValue Transform(IFlowContext context,FlowValue payload) =>
+        public object Transform(IFlowContext context,object payload) =>
             _transformFunction(context,payload);
     }
 }

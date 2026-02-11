@@ -71,11 +71,11 @@ namespace FlowEngine.Engine.Flows.Graphs
             return null;
         }
 
-        public FlowNode? GetStep(Guid nodeId)
+        public FlowNode GetStep(Guid nodeId)
         {
             if (_nodesById.TryGetValue(nodeId, out var node))
                 return node;
-            return null;
+            throw new InvalidOperationException();
         }
 
         private void Validate()

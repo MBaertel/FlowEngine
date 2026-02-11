@@ -1,5 +1,6 @@
 ﻿using FlowEngine.Engine.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
+using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Flows.Values;
 using FlowEngine.Tests.EngineTests.TestSteps;
 using System;
@@ -8,7 +9,7 @@ using System.Text;
 
 namespace FlowEngine.Tests.EngineTests.TestFlows
 {
-    public class MathTestFlow : FlowDefinitionBase
+    public class MathTestFlow : FlowDefinitionBase<MathInput,float>
     {
         public override string Name => "MathTest";
 
@@ -30,42 +31,48 @@ namespace FlowEngine.Tests.EngineTests.TestFlows
         }
     }
 
-    public class MathTestFlowMult : FlowDefinitionBase
+    public class MathTestFlowMany : FlowDefinitionBase<MathInput,float>
     {
-        public override string Name => "MathTestMult";
+        public override string Name => "MathTestMany";
 
         protected override FlowGraph BuildFlow()
         {
-            var mathNode = new FlowNode(
-                Guid.NewGuid(),
-                typeof(MathStep));
-            var mathNode2 = new FlowNode(
-                Guid.NewGuid(),
-                typeof(MathStep));
-
-            var nodes = new FlowNode[]
+            var nodes = new List<FlowNode>();
+            var edges = new List<FlowEdge>();
+            var transformers = new List<FlowTransformer>();
+            Func<IFlowContext, object, object> lambda = (ctx, payload) =>
             {
-                mathNode,
-                mathNode2,
+                var res = (float)payload;
+                var mathIn = new MathInput(res, 1, MathModes.Add);
+                return mathIn;
             };
 
-            var edge = new FlowEdge(Guid.NewGuid(), mathNode.Id, mathNode2.Id, null);
-            var edges = new FlowEdge[]
+            FlowNode lastNode = null;
+            for(int i = 0; i < 500; i++)
             {
-                edge
-            };
+                var node = new FlowNode(
+                Guid.NewGuid(),
+                typeof(MathStep));
+                nodes.Add(node);
 
-            var transformers = new FlowTransformer[]
-            {
-                new FlowTransformer(edge.Id,(ctx,payload) =>
+                if(lastNode != null)
                 {
-                    var res = payload.Unwrap<float>();
-                    var mathIn = new MathInput(res,2,MathModes.Multiply);
-                    return FlowValue.Wrap(mathIn);
-                })
-            };
+                    var edge = new FlowEdge(
+                        Guid.NewGuid(),
+                        lastNode.Id,
+                        node.Id,
+                        null);
+                    edges.Add(edge);
 
-            return new FlowGraph(mathNode.Id, nodes, edges, transformers);
+                    var transformer = new FlowTransformer(
+                        edge.Id,
+                        lambda);
+                    transformers.Add(transformer);
+                }
+                lastNode = node;
+            }
+
+            return new FlowGraph(nodes.First().Id, nodes, edges, transformers);
         }
     }
 }

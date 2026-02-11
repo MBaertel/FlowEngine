@@ -19,11 +19,8 @@ namespace FlowEngine.Core
             services.AddSingleton<ICommandRouter, CommandRouter>();
         }
 
-        public async Task<TResult> RunCommand<TResult>(ICommand command) =>
-            await _commandRouter.RunCommand<TResult>(command);
-
-        public async Task<TResult> RunCommand<TInput,TResult>(ICommand<TInput,TResult> command) =>
-            await _commandRouter.RunCommand<TInput,TResult>(command);
+        public async Task<TResult> RunCommand<TInput, TResult>(ICommand<TInput, TResult> command) =>
+            await _commandRouter.RunCommand(command);
 
         public void RegisterCommandBinding<TCommand, TCommandIn, TFlowIn>(Func<TCommandIn, TFlowIn> adapter) 
             where TCommand : ICommand

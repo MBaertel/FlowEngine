@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using FlowEngine.Engine.Flows.Definitions;
+using FlowEngine.Engine.Flows.Graphs;
+using FlowEngine.Engine.Flows.Graphs.Builder;
 using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Flows.Values;
 
@@ -12,7 +14,7 @@ namespace FlowEngine.Core.Commands
         private readonly IFlowOrchestrator _flowOrchestrator;
         private readonly IFlowDefinitionRegistry _flowRegistry;
 
-        private readonly Dictionary<Type, CommandBinding> _bindings = new();
+        private readonly Dictionary<Type, object> _bindings = new();
 
         public CommandRouter(IFlowOrchestrator flowOrchestrator, IFlowDefinitionRegistry flowDefinitionRegistry)
         {
@@ -20,45 +22,37 @@ namespace FlowEngine.Core.Commands
             _flowRegistry = flowDefinitionRegistry;
         }
 
-        public async Task<TResult> RunCommand<TResult>(ICommand command)
-        {
-            var binding = ResolveBinding(command);
-            var flow = _flowRegistry.GetByName(command.FlowName);
-            
-            var input = binding.InputAdapter(command.InputValue);
-
-            var result = await _flowOrchestrator.ExecuteFlowAsync(flow, input);
-
-            return result.Unwrap<TResult>();
-        }
-
-        public void Register<TCommand, TCommandIn, TFlowIn>(Func<TCommandIn, TFlowIn> adapter)
+        public void Register<TCommand, TCommandIn, TFlowIn>(Func<TCommandIn, TFlowIn>? adapter = null)
             where TCommand : ICommand
-            where TFlowIn : notnull
         {
-            FlowValue Wrapper(object? obj)
-            {
-                if (obj is not TCommandIn input)
-                    throw new InvalidOperationException($"Command value must be {typeof(TCommandIn).Name}");
+            if (!typeof(TFlowIn).IsAssignableFrom(typeof(TCommandIn)) && adapter == null)
+                throw new InvalidOperationException("Command Input and Flow Input dont match, adapter is required.");
 
-                var result = adapter(input);
-                
-                return FlowValue.Wrap(result);
-            }
-
-            _bindings[typeof(TCommand)] = new CommandBinding(typeof(TCommand),Wrapper);
+            var binding = new CommandBinding<TCommandIn>(
+                typeof(TCommand),
+                CommandLambda.CommandTransformer(adapter)
+            );
+            _bindings.Add(typeof(TCommand), binding);
         }
 
-        private CommandBinding ResolveBinding(ICommand command)
+        public async Task<TResult> RunCommand<TInput, TResult>(ICommand<TInput,TResult> command)
         {
             if (!_bindings.TryGetValue(command.GetType(), out var binding))
-                return CommandBinding.Default;
-            return binding;
-        }
+                throw new InvalidOperationException($"Command {command.GetType()} is not registered.");
 
-        public Task<TResult> RunCommand<TInput, TResult>(ICommand<TInput, TResult> command)
-        {
-            throw new NotImplementedException();
+            var flow = _flowRegistry.GetByName(command.FlowName);
+
+            object input;
+            if (_bindings[command.GetType()] is CommandBinding<TInput> typedBinding && typedBinding.InputAdapter != null)
+                input = typedBinding.InputAdapter(command.InputValue);
+            else
+                input = command.InputValue;
+            
+            var result = await _flowOrchestrator.ExecuteFlowUntypedAsync(flow, input);
+            if(result is TResult typedResult)
+                return typedResult;
+
+            throw new InvalidCastException($"Command returned value of type {result.GetType()}, expected {typeof(TResult)}");
         }
     }
 }

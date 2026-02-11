@@ -14,8 +14,8 @@ namespace FlowEngine.Core.Commands
     }
 
     public abstract record OutputOnlyCommand<TOutput>(string FlowName)
-        : Command<EmptyValue,TOutput>(FlowName,FlowValue.Empty);
+        : Command<VoidValue,TOutput>(FlowName,VoidValue.Value);
 
     public abstract record InputOnlyCommand<TInput>(string FlowName,TInput InputValue)
-        : Command<TInput,EmptyValue>(FlowName,InputValue);
+        : Command<TInput,VoidValue>(FlowName,InputValue);
 }

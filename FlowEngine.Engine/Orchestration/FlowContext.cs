@@ -14,14 +14,14 @@ namespace FlowEngine.Engine.Flows.Orchestration
         private readonly IFlowDefinitionRegistry _flowRegistry;
         private readonly Dictionary<string, object?> _variables = new();
 
-        public FlowContext(IFlowOrchestrator orchestrator,IFlowDefinitionRegistry registry,FlowValue payload)
+        public FlowContext(IFlowOrchestrator orchestrator,IFlowDefinitionRegistry registry,object payload)
         {
             _flowOrchestrator = orchestrator;
             _flowRegistry = registry;
-            Payload = payload ?? FlowValue.Empty;
+            Payload = payload ?? VoidValue.Value;
         }
 
-        public FlowValue Payload { get; set; }
+        public object Payload { get; set; }
 
         public IFlowDefinition? ResolveFlowDefinitionById(Guid id) =>
             _flowRegistry.GetById(id);
@@ -42,15 +42,15 @@ namespace FlowEngine.Engine.Flows.Orchestration
             _variables[name] = value;
         }
 
-        public async Task<FlowValue> ExecuteSubFlow(IFlowDefinition definition,FlowValue data) =>
-            await _flowOrchestrator.ExecuteFlowAsync(definition, data);
+        public async Task<object> ExecuteSubFlow(IFlowDefinition definition,object input) =>
+            await _flowOrchestrator.ExecuteFlowUntypedAsync(definition,input);
 
-        public async Task<TypedValue<TResult>> ExecuteSubFlow<TResult>(IFlowDefinition definition,FlowValue data)
+        public async Task<TResult> ExecuteSubFlow<TInput,TResult>(IFlowDefinition<TInput,TResult> definition,TInput input)
         {
-            var result = await _flowOrchestrator.ExecuteFlowAsync(definition,data);
-            if(result is TypedValue<TResult> typed)
+            var result = await _flowOrchestrator.ExecuteFlowAsync(definition,input);
+            if(result is TResult typed)
                 return typed;
-            throw new InvalidCastException($"Flow returned value of type {result.GetType()}, expected {typeof(TypedValue<TResult>)}");
+            throw new InvalidCastException($"Flow returned value of type {result.GetType()}, expected {typeof(TResult)}");
         }
     }
 }

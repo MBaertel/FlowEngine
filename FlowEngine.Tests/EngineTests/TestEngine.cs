@@ -18,13 +18,19 @@ namespace FlowEngine.Tests.EngineTests
         {
             services.AddSingleton<IFlowStep, MathStep>();
             services.AddSingleton<IFlowDefinition, MathTestFlow>();
-            services.AddSingleton<IFlowDefinition, MathTestFlowMult>();
+            services.AddSingleton<IFlowDefinition, MathTestFlowMany>();
         }
 
-        public Task<FlowValue> RunFlow(IFlowDefinition definition,FlowValue input)
+        public Task<object> RunFlow(IFlowDefinition definition,object input)
+        {
+            var orchestrator = this.Services.GetRequiredService<IFlowOrchestrator>();
+            return orchestrator.ExecuteFlowUntypedAsync(definition, input);
+        } 
+        
+        public Task<TResult> RunTypedFlow<TInput,TResult>(IFlowDefinition<TInput,TResult> definition,TInput input)
         {
             var orchestrator = this.Services.GetRequiredService<IFlowOrchestrator>();
             return orchestrator.ExecuteFlowAsync(definition, input);
-        }  
+        }
     }
 }
