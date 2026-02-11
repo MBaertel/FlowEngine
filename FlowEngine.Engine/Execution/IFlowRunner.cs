@@ -17,12 +17,13 @@ namespace FlowEngine.Engine.Flows.Execution
         public bool IsWaiting { get; }
         public IFlowInstance Flow { get; }
         public IFlowContext Context { get; }
-
-        Task<object?> WaitForCompletion();
+        
+        public Guid GetCurrentStepId();
+        Task<object> WaitForCompletion();
         ValueTask StepAsync();
     }
 
-    public interface IFlowRunner<TIn,TResult> : IFlowRunner
+    public interface IFlowRunner<TResult> : IFlowRunner
     {
         new Task<TResult> WaitForCompletion();
     }

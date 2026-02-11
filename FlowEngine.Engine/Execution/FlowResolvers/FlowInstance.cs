@@ -10,6 +10,8 @@ namespace FlowEngine.Engine.Execution.Instances
 {
     public class FlowInstance : IFlowInstance
     {
+        public Guid InstanceId { get; }
+
         private readonly FlowGraph _graph;
         private readonly IStepFactory _stepFactory;
 
@@ -17,6 +19,13 @@ namespace FlowEngine.Engine.Execution.Instances
         {
             _stepFactory = stepFactory;
             _graph = graph;
+        }
+
+        public FlowInstance(Guid Id,IStepFactory stepFactory,FlowGraph graph)
+        {
+            _stepFactory = stepFactory;
+            _graph = graph;
+            InstanceId = Id;
         }
 
         public FlowGraph Graph => _graph;

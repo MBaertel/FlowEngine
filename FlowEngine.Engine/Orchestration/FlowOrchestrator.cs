@@ -11,20 +11,19 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using FlowEngine.Engine.Values;
+using FlowEngine.Engine.Serialization;
 
 namespace FlowEngine.Engine.Flows.Orchestration
 {
     public class FlowOrchestrator : IFlowOrchestrator
     {
+        private readonly ISubflowCallRegisty _callRegistry;
         private readonly IFlowDefinitionRegistry _definitionRegistry;
         private readonly IStepFactory _stepFactory;
 
-        private readonly ConcurrentDictionary<(Type input, Type output), Func<FlowOrchestrator, IFlowDefinition, object, Task<object>>> _typedMethodCache
-            = new();
-
-        private readonly List<IFlowRunner> _activeRunners = new();
+        private readonly Dictionary<Guid, IFlowRunner> _activeRunners = new();
         private readonly List<IFlowRunner> _runnersToStep = new();
-        public IReadOnlyCollection<IFlowRunner> ActiveRunners => _activeRunners.ToList().AsReadOnly();
+        public IReadOnlyCollection<IFlowRunner> ActiveRunners => _activeRunners.Values.ToList().AsReadOnly();
 
         public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry,IStepFactory stepFactory)
         {
@@ -32,40 +31,39 @@ namespace FlowEngine.Engine.Flows.Orchestration
             _stepFactory = stepFactory;
         }
 
-        public async Task<object> ExecuteFlowUntypedAsync(
+        public IFlowRunner AddFlow(IFlowDefinition flow, object input)
+        {
+            var instance = new FlowInstance(_stepFactory, flow.Flow);
+            var context = new FlowContext(this, instance, _definitionRegistry,_callRegistry, input);
+            var runner = new FlowRunner<object>(instance, context);
+
+            _activeRunners.Add(runner.Id,runner);
+            return runner;
+        }
+
+        public IFlowRunner<TResult> AddFlow<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TInput input)
+        {
+            var instance = new FlowInstance(_stepFactory, flow.Flow);
+            var context = new FlowContext(this,instance, _definitionRegistry, _callRegistry, input);
+            var runner = new FlowRunner<TResult>(instance, context);
+
+            _activeRunners.Add(runner.Id,runner);
+            return runner;
+        }
+
+        public async Task<object> ExecuteFlowAsync(
             IFlowDefinition flowDefinition,
             object input)
         {
-            var inputType = flowDefinition.InputType;
-            var outputType = flowDefinition.OutputType;
-
-            // Find generic method definition by name
-            var methodDef = typeof(FlowOrchestrator)
-                .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .FirstOrDefault(m =>
-                    m.Name == nameof(ExecuteFlowAsync) &&
-                    m.IsGenericMethodDefinition &&
-                    m.GetGenericArguments().Length == 2 &&
-                    m.GetParameters().Length == 2
-                );
-
-            if (methodDef == null)
-                throw new InvalidOperationException("Typed ExecuteFlowAsync method not found.");
-
-            // Construct method with concrete types
-            var typedMethod = methodDef.MakeGenericMethod(inputType, outputType);
-
-            // Validate input type
-            if (!inputType.IsInstanceOfType(input))
-                throw new InvalidCastException($"Input is not of the expected type {inputType}");
-
-            // Invoke and await dynamically
-            var task = (Task)typedMethod.Invoke(this, new object[] { flowDefinition, input })!;
-            await task.ConfigureAwait(false);
-
-            // Extract Result property from Task<TResult>
-            var resultProperty = task.GetType().GetProperty("Result")!;
-            return resultProperty.GetValue(task)!;
+            var runner = AddFlow(flowDefinition, input);
+            try
+            {
+                return await runner.WaitForCompletion();
+            }
+            finally
+            {
+                _activeRunners.Remove(runner.Id);
+            }
         }
 
         //Input and Output
@@ -73,11 +71,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
             IFlowDefinition<TInput, TResult> flow, 
             TInput input)
         {
-            var context = new FlowContext(this, _definitionRegistry, input);
-            var instance = new FlowInstance(_stepFactory,flow.Flow);
-            var runner = new FlowRunner<TInput,TResult>(instance,context);
-
-            _activeRunners.Add(runner);
+            var runner = AddFlow(flow, input);
 
             try
             {
@@ -85,14 +79,14 @@ namespace FlowEngine.Engine.Flows.Orchestration
             }
             finally
             {
-                _activeRunners.Remove(runner);
+                _activeRunners.Remove(runner.Id);
             }
         }
 
         public Task StepAllAsync()
         {
             _runnersToStep.Clear();
-            _runnersToStep.AddRange(_activeRunners);
+            _runnersToStep.AddRange(_activeRunners.Values);
 
             foreach (var runner in _runnersToStep)
             {
@@ -115,6 +109,16 @@ namespace FlowEngine.Engine.Flows.Orchestration
             {
                 Console.Error.WriteLine(ex.ToString());
             }
+        }
+
+        public IFlowRunner<T> GetRunner<T>(Guid instanceId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IFlowRunner GetRunner(Guid instanceId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

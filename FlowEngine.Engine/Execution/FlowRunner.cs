@@ -12,14 +12,13 @@ using FlowEngine.Engine.Values;
 
 namespace FlowEngine.Engine.Flows.Execution
 {
-    public class FlowRunner<TIn,TResult> : IFlowRunner<TIn,TResult>
+    public class FlowRunner<TResult> : IFlowRunner<TResult>
     {
         private TaskCompletionSource<TResult>? _tcs = 
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private bool _isWaiting;
         private bool _isCompleted;
-        private FlowWait _currentWait;
 
         private IFlowStep _currentStep;
         private Guid _currentStepId;
@@ -46,12 +45,6 @@ namespace FlowEngine.Engine.Flows.Execution
             
             _isWaiting = true;
             var stepResult = await _currentStep.ExecuteAsyncUntyped(Context, Context.Payload);
-
-            if(stepResult is FlowWait wait)
-            {
-                _currentWait = wait;
-                stepResult = await wait.WaitForCompletion();
-            }
             _isWaiting = false;
 
             Context.Payload = stepResult;
@@ -83,28 +76,12 @@ namespace FlowEngine.Engine.Flows.Execution
             return _tcs.Task;
         }
 
+        public Guid GetCurrentStepId()
+        {
+            return _currentStepId; 
+        }
+
         Task<object?> IFlowRunner.WaitForCompletion() =>
             WaitForCompletion().ContinueWith(t => (object?) t.Result);
-
-        private async Task ResumeAfterSubflow(FlowWait wait)
-        {
-            try
-            {
-                var stepResult = await wait.WaitForCompletion();
-                _currentWait = null;
-                _isWaiting = false;
-                Advance(stepResult);
-            }
-            catch (Exception e)
-            {
-                _isCompleted = true;
-                _tcs?.TrySetException(e);
-            }
-        }
-
-        private void Advance(object stepResult)
-        {
-
-        }
     }
 }

@@ -9,6 +9,7 @@ namespace FlowEngine.Engine.Execution.Instances
 {
     public interface IFlowInstance
     {
+        public Guid InstanceId { get; }
         public Guid StartStepId { get; }
         public IFlowStep GetStep(Guid stepId);
         public NextStepResult ResolveNext(Guid currentStepId, IFlowContext ctx);

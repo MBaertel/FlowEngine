@@ -12,7 +12,13 @@ namespace FlowEngine.Engine.Flows.Orchestration
     {
         Task StepAllAsync();
         IReadOnlyCollection<IFlowRunner> ActiveRunners { get; }
-        Task<object> ExecuteFlowUntypedAsync(IFlowDefinition flow, object input);
+        Task<object> ExecuteFlowAsync(IFlowDefinition flow, object input);
         Task<TResult> ExecuteFlowAsync<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TInput input);
+
+        IFlowRunner AddFlow(IFlowDefinition flow,object input);
+        IFlowRunner<TResult> AddFlow<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TInput input);
+
+        public IFlowRunner<T> GetRunner<T>(Guid instanceId);
+        public IFlowRunner GetRunner(Guid instanceId);
     }
 }
