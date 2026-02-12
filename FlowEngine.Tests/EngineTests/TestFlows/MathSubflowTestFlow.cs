@@ -1,7 +1,6 @@
 ﻿using FlowEngine.Engine.Definitions;
 using FlowEngine.Engine.Execution.Context;
 using FlowEngine.Engine.Flows.Graphs;
-using FlowEngine.Engine.Flows.Values;
 using FlowEngine.Tests.EngineTests.TestSteps;
 using System;
 using System.Collections.Generic;
@@ -9,15 +8,15 @@ using System.Text;
 
 namespace FlowEngine.Tests.EngineTests.TestFlows
 {
-    public class MathTestFlow : FlowDefinitionBase<MathInput,float>
+    internal class MathSubflowTestFlow : FlowDefinitionBase<MathInput, float>
     {
-        public override string Name => "MathTest";
+        public override string Name => "MathTestSubflow";
 
         protected override FlowGraph BuildFlow()
         {
             var mathNode = new FlowNode(
                 Guid.NewGuid(),
-                typeof(MathStep));
+                typeof(TestSubflowStep));
 
             var nodes = new FlowNode[]
             {
@@ -31,9 +30,9 @@ namespace FlowEngine.Tests.EngineTests.TestFlows
         }
     }
 
-    public class MathTestFlowMany : FlowDefinitionBase<MathInput,float>
+    public class MathSubflowTestMany : FlowDefinitionBase<MathInput, float>
     {
-        public override string Name => "MathTestMany";
+        public override string Name => "MathSubflowTestMany";
 
         protected override FlowGraph BuildFlow()
         {
@@ -48,14 +47,14 @@ namespace FlowEngine.Tests.EngineTests.TestFlows
             };
 
             FlowNode lastNode = null;
-            for(int i = 0; i < 500; i++)
+            for (int i = 0; i < 500; i++)
             {
                 var node = new FlowNode(
                 Guid.NewGuid(),
-                typeof(MathStep));
+                typeof(TestSubflowStep));
                 nodes.Add(node);
 
-                if(lastNode != null)
+                if (lastNode != null)
                 {
                     var edge = new FlowEdge(
                         Guid.NewGuid(),

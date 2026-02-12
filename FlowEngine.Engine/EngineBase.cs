@@ -5,6 +5,7 @@ using System.Text;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Steps;
+using FlowEngine.Engine.Serialization;
 
 namespace FlowEngine.Engine
 {
@@ -34,6 +35,7 @@ namespace FlowEngine.Engine
         {
             services.AddSingleton<IFlowDefinitionRegistry, FlowDefinitionRegistry>();
             services.AddSingleton<IFlowOrchestrator, FlowOrchestrator>();
+            services.AddSingleton<ISubflowCallRegisty, SubflowCallRegistry>();
             services.AddSingleton<IStepFactory, StepFactory>();
         }
 

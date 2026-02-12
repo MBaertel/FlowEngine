@@ -1,4 +1,4 @@
-﻿using FlowEngine.Engine.Flows.Orchestration;
+﻿using FlowEngine.Engine.Execution.Context;
 using FlowEngine.Engine.Steps;
 using FlowEngine.Engine.Values;
 using FlowEngine.Integration.Systems;
@@ -21,7 +21,7 @@ namespace FlowEngine.Integration.Steps
 
         public override async Task<TOut> ExecuteAsync(IFlowContext ctx, TIn input)
         {
-            await _system.RunAsync(input);
+            return await _system.RunAsync(input);
         }
 
         public override void Undo(TIn input, TOut output)

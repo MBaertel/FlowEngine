@@ -25,10 +25,11 @@ namespace FlowEngine.Engine.Flows.Orchestration
         private readonly List<IFlowRunner> _runnersToStep = new();
         public IReadOnlyCollection<IFlowRunner> ActiveRunners => _activeRunners.Values.ToList().AsReadOnly();
 
-        public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry,IStepFactory stepFactory)
+        public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry,IStepFactory stepFactory,ISubflowCallRegisty callRegisty)
         {
             _definitionRegistry = definitionRegistry;
             _stepFactory = stepFactory;
+            _callRegistry = callRegisty;
         }
 
         public IFlowRunner AddFlow(IFlowDefinition flow, object input)
@@ -37,7 +38,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
             var context = new FlowContext(this, instance, _definitionRegistry,_callRegistry, input);
             var runner = new FlowRunner<object>(instance, context);
 
-            _activeRunners.Add(runner.Id,runner);
+            _activeRunners.Add(runner.RunnerId,runner);
             return runner;
         }
 
@@ -47,7 +48,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
             var context = new FlowContext(this,instance, _definitionRegistry, _callRegistry, input);
             var runner = new FlowRunner<TResult>(instance, context);
 
-            _activeRunners.Add(runner.Id,runner);
+            _activeRunners.Add(runner.RunnerId,runner);
             return runner;
         }
 
@@ -56,14 +57,8 @@ namespace FlowEngine.Engine.Flows.Orchestration
             object input)
         {
             var runner = AddFlow(flowDefinition, input);
-            try
-            {
-                return await runner.WaitForCompletion();
-            }
-            finally
-            {
-                _activeRunners.Remove(runner.Id);
-            }
+            
+            return await runner.WaitForCompletion();
         }
 
         //Input and Output
@@ -73,14 +68,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
         {
             var runner = AddFlow(flow, input);
 
-            try
-            {
-                return await runner.WaitForCompletion();
-            }
-            finally
-            {
-                _activeRunners.Remove(runner.Id);
-            }
+            return await runner.WaitForCompletion();
         }
 
         public Task StepAllAsync()
@@ -90,11 +78,16 @@ namespace FlowEngine.Engine.Flows.Orchestration
 
             foreach (var runner in _runnersToStep)
             {
-                if(runner != null && !runner.IsWaiting)
+                if(runner != null && !runner.IsWaiting && !runner.IsCompleted)
                 {
                     //_ = StepRunnerSafelyAsync(runner);
                     _ = StepRunnerSafelyAsync(runner);
                 }
+            }
+            var removeIds = _activeRunners.Values.Where(x => x.IsCompleted).Select(x => x.RunnerId);
+            foreach (var id in removeIds)
+            {
+                _activeRunners.Remove(id);
             }
             return Task.CompletedTask;
         }
@@ -111,14 +104,18 @@ namespace FlowEngine.Engine.Flows.Orchestration
             }
         }
 
-        public IFlowRunner<T> GetRunner<T>(Guid instanceId)
+        public IFlowRunner<T>? GetRunner<T>(Guid instanceId)
         {
-            throw new NotImplementedException();
+            if(_activeRunners.TryGetValue(instanceId, out var runner) && runner is IFlowRunner<T> typedRunner)
+                return typedRunner;
+            return null;
         }
 
-        public IFlowRunner GetRunner(Guid instanceId)
+        public IFlowRunner? GetRunner(Guid instanceId)
         {
-            throw new NotImplementedException();
+            if (_activeRunners.TryGetValue(instanceId, out var runner))
+                return runner;
+            return null;
         }
     }
 }

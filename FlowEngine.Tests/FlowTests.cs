@@ -156,7 +156,72 @@ namespace FlowEngine.Tests
 
             sw.Stop();
             Console.WriteLine($"Ran {speedTestRuns} flows in {sw.ElapsedMilliseconds} ms");
+        }
 
+        [Test]
+        public async Task MathSubFlowTest()
+        {
+            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestSubflow");
+            var input = new MathInput(1, 1, MathModes.Add);
+
+            var flowTask = _engine.RunFlow(flowDefinition, input);
+
+            while (!flowTask.IsCompleted)
+            {
+                await _engine.TickAsync();
+            }
+
+            var result = await flowTask;
+
+            var value = (float)result;
+
+            Assert.That(value, Is.EqualTo(2f));
+        }
+
+        [Test]
+        public async Task MathSubFlowSpeedTestTyped()
+        {
+            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestSubflow");
+            var input = new MathInput(1, 1, MathModes.Add);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            var tasks = new Task<float>[speedTestRuns];
+            for (int i = 0; i < speedTestRuns; i++)
+            {
+                tasks[i] = _engine.RunTypedFlow(flowDefinition, input);
+            }
+
+            while (tasks.Any(x => !x.IsCompleted))
+            {
+                await _engine.TickAsync();
+            }
+
+            sw.Stop();
+            Console.WriteLine($"Ran {speedTestRuns} flows in {sw.ElapsedMilliseconds} ms");
+        }
+
+        [Test]
+        public async Task MathSubFlowManySpeedTestTyped()
+        {
+            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathSubflowTestMany");
+            var input = new MathInput(1, 1, MathModes.Add);
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            var tasks = new Task<float>[speedTestRuns];
+            for (int i = 0; i < speedTestRuns; i++)
+            {
+                tasks[i] = _engine.RunTypedFlow(flowDefinition, input);
+            }
+
+            while (tasks.Any(x => !x.IsCompleted))
+            {
+                await _engine.TickAsync();
+            }
+
+            sw.Stop();
+            Console.WriteLine($"Ran {speedTestRuns} flows in {sw.ElapsedMilliseconds} ms");
         }
     }
 }

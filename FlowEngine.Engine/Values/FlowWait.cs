@@ -12,7 +12,7 @@ namespace FlowEngine.Engine.Values
     {
         public Guid FlowInstanceId { get; init; }
 
-        private IFlowRunner? _runner;
+        protected IFlowRunner? _runner;
 
         public FlowWait(Guid flowInstaceId)
         {
@@ -34,8 +34,6 @@ namespace FlowEngine.Engine.Values
 
     public class FlowWait<TResult> : FlowWait
     {
-        protected IFlowRunner<TResult>? _runner;
-
         public FlowWait(Guid instanceId)
             : base(instanceId) { }
 
@@ -46,7 +44,10 @@ namespace FlowEngine.Engine.Values
 
         public new Task<TResult> AsTask()
         {
-            return _runner.WaitForCompletion();
+            if (_runner is IFlowRunner<TResult> typedRunner)
+                return typedRunner.WaitForCompletion();
+
+            throw new InvalidOperationException();
         }
 
         public TaskAwaiter<TResult> GetAwaiter() => AsTask().GetAwaiter();

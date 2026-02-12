@@ -17,14 +17,17 @@ namespace FlowEngine.Tests.EngineTests
         protected override void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IFlowStep, MathStep>();
+            services.AddSingleton<IFlowStep, TestSubflowStep>();
             services.AddSingleton<IFlowDefinition, MathTestFlow>();
             services.AddSingleton<IFlowDefinition, MathTestFlowMany>();
+            services.AddSingleton<IFlowDefinition, MathSubflowTestFlow>();
+            services.AddSingleton<IFlowDefinition, MathSubflowTestMany>();
         }
 
         public Task<object> RunFlow(IFlowDefinition definition,object input)
         {
             var orchestrator = this.Services.GetRequiredService<IFlowOrchestrator>();
-            return orchestrator.ExecuteFlowUntypedAsync(definition, input);
+            return orchestrator.ExecuteFlowAsync(definition, input);
         } 
         
         public Task<TResult> RunTypedFlow<TInput,TResult>(IFlowDefinition<TInput,TResult> definition,TInput input)

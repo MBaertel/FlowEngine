@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using FlowEngine.Engine.Execution.Context;
 using FlowEngine.Engine.Execution.Instances;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
-using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Flows.Steps;
 using FlowEngine.Engine.Flows.Values;
 using FlowEngine.Engine.Values;
@@ -17,8 +17,9 @@ namespace FlowEngine.Engine.Flows.Execution
         private TaskCompletionSource<TResult>? _tcs = 
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private bool _isWaiting;
-        private bool _isCompleted;
+        private bool _isWaiting = false;
+        private bool _isCompleted = false;
+        private bool _isFinished = false;
 
         private IFlowStep _currentStep;
         private Guid _currentStepId;
@@ -26,14 +27,15 @@ namespace FlowEngine.Engine.Flows.Execution
         public bool IsWaiting => _isWaiting;
         public bool IsCompleted => _isCompleted;
 
-        public IFlowInstance Flow { get; }
+        public IFlowInstance Instance { get; }
         public IFlowContext Context { get; }
-        public Guid Id { get; }
+        public Guid RunnerId { get; }
 
         public FlowRunner(IFlowInstance instance,IFlowContext context)
         {
+            RunnerId = instance.InstanceId;
             Context = context;
-            Flow = instance;
+            Instance = instance;
 
             _currentStepId = instance.StartStepId;
             _currentStep = instance.GetStep(_currentStepId);
@@ -41,7 +43,7 @@ namespace FlowEngine.Engine.Flows.Execution
 
         public async ValueTask StepAsync()
         {
-            if (_isCompleted || _isWaiting) return;
+            if (_isFinished || _isWaiting) return;
             
             _isWaiting = true;
             var stepResult = await _currentStep.ExecuteAsyncUntyped(Context, Context.Payload);
@@ -49,11 +51,11 @@ namespace FlowEngine.Engine.Flows.Execution
 
             Context.Payload = stepResult;
 
-            var next = Flow.ResolveNext(_currentStepId, Context);
+            var next = Instance.ResolveNext(_currentStepId, Context);
 
             if (next == null)
             {
-                _isCompleted = true;
+                _isFinished = true;
                 if (Context.Payload is not TResult typed)
                     throw new InvalidOperationException($"Flow completed with {Context.Payload.GetType()}, expected {typeof(TResult)}");
                 _tcs?.TrySetResult(typed);
@@ -69,11 +71,18 @@ namespace FlowEngine.Engine.Flows.Execution
 
         public Task<TResult> WaitForCompletion()
         {
-            if (_isCompleted)
+            if (_isFinished)
+            {
+                _isCompleted = true;
                 return Task.FromResult((TResult)Context.Payload!);
+            }
 
             _tcs ??= new TaskCompletionSource<TResult>();
-            return _tcs.Task;
+            return _tcs.Task.ContinueWith(t =>
+            {
+                _isCompleted = true;
+                return t.Result;
+            });
         }
 
         public Guid GetCurrentStepId()

@@ -48,7 +48,7 @@ namespace FlowEngine.Core.Commands
             else
                 input = command.InputValue;
             
-            var result = await _flowOrchestrator.ExecuteFlowUntypedAsync(flow, input);
+            var result = await _flowOrchestrator.ExecuteFlowAsync(flow, input);
             if(result is TResult typedResult)
                 return typedResult;
 
