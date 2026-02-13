@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FlowEngine.Engine.Execution.Instances
+namespace FlowEngine.Engine.Execution
 {
     public interface IFlowInstance
     {

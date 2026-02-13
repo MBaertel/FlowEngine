@@ -22,6 +22,7 @@ namespace FlowEngine.Tests.EngineTests
             services.AddSingleton<IFlowDefinition, MathTestFlowMany>();
             services.AddSingleton<IFlowDefinition, MathSubflowTestFlow>();
             services.AddSingleton<IFlowDefinition, MathSubflowTestMany>();
+            services.AddSingleton<IFlowDefinition, MathSubflowTwiceTestFlow>();
         }
 
         public Task<object> RunFlow(IFlowDefinition definition,object input)

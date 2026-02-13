@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using FlowEngine.Engine.Execution;
-using FlowEngine.Engine.Execution.Instances;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
 using FlowEngine.Engine.Flows.Steps;
@@ -13,14 +12,14 @@ namespace FlowEngine.Engine.Flows.Execution
 {
     public interface IFlowRunner
     {
-        Guid RunnerId { get; }
+        Guid InstanceId { get; }
 
         IFlowInstance Instance { get; }
 
         bool IsWaiting { get; }
         bool IsCompleted { get; }
         
-        ValueTask StepAsync();
+        Task StepAsync();
         Task<object> WaitForCompletion();
     }
 

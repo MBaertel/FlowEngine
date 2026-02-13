@@ -11,7 +11,7 @@ namespace FlowEngine.Tests.EngineTests.TestSteps
 {
     internal class MathStep : FlowStepBase<MathInput,float>
     {
-        public override Task<float> ExecuteAsync(IFlowContext ctx, MathInput input)
+        public override Task<float> ExecuteAsync(IStepContext ctx, MathInput input)
         {
             float output;
             switch (input.mode)

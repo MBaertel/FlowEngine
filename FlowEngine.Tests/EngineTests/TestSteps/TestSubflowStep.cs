@@ -8,9 +8,9 @@ namespace FlowEngine.Tests.EngineTests.TestSteps
 {
     internal class TestSubflowStep : FlowStepBase<MathInput, float>
     {
-        public override async Task<float> ExecuteAsync(IFlowContext ctx, MathInput input)
+        public override async Task<float> ExecuteAsync(IStepContext ctx, MathInput input)
         {
-            var flow = ctx.ResolveFlowDefinitionByName<MathInput, float>("MathTest");
+            var flow = ctx.GetFlowByName<MathInput,float>("MathTest");
             var result = await ctx.ExecuteSubFlow(flow, input);
 
             return result;

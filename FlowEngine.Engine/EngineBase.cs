@@ -5,7 +5,6 @@ using System.Text;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Steps;
-using FlowEngine.Engine.Serialization;
 
 namespace FlowEngine.Engine
 {
@@ -35,12 +34,11 @@ namespace FlowEngine.Engine
         {
             services.AddSingleton<IFlowDefinitionRegistry, FlowDefinitionRegistry>();
             services.AddSingleton<IFlowOrchestrator, FlowOrchestrator>();
-            services.AddSingleton<ISubflowCallRegisty, SubflowCallRegistry>();
             services.AddSingleton<IStepFactory, StepFactory>();
         }
 
-        public Task TickAsync() =>
-            _flowOrchestrator.StepAllAsync();
+        public Task TickAsync(int maxFlowsPerTick = 1000) =>
+            _flowOrchestrator.StepAllAsync(maxFlowsPerTick);
 
         public void RegisterFlow(IFlowDefinition definition) =>
             _flowRegistry.Register(definition);

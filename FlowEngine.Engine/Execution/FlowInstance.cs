@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FlowEngine.Engine.Execution.Instances
+namespace FlowEngine.Engine.Execution
 {
     public class FlowInstance : IFlowInstance
     {
@@ -26,11 +26,13 @@ namespace FlowEngine.Engine.Execution.Instances
         private readonly IStepFactory _stepFactory;
         private readonly FlowGraph _graph;
 
-        public FlowInstance(IFlowDefinition definition,IStepFactory stepFactory)
+        public FlowInstance(IFlowDefinition definition,IStepFactory stepFactory,object payload)
         {
             _stepFactory = stepFactory;
             _graph = definition.Flow;
+
             CurrentStepId = _graph.StartNodeId;
+            Payload = payload;
         }
 
         public IFlowStep GetStep(Guid stepId)

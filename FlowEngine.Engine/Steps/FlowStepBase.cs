@@ -9,7 +9,7 @@ namespace FlowEngine.Engine.Steps
     public abstract class FlowStepBase<TIn, TOut> : IFlowStep<TIn, TOut>
     {
 
-        public async Task<object> ExecuteAsyncUntyped(IFlowContext ctx, object input)
+        public async Task<object> ExecuteAsyncUntyped(IStepContext ctx, object input)
         {
             if (input is not TIn typed)
                 throw new InvalidCastException($"Input was {input.GetType()} ,expected {typeof(TIn)}");
@@ -27,7 +27,7 @@ namespace FlowEngine.Engine.Steps
             Undo(typedIn, typedOut);
         }
 
-        public abstract Task<TOut> ExecuteAsync(IFlowContext ctx, TIn input);
+        public abstract Task<TOut> ExecuteAsync(IStepContext ctx, TIn input);
         public abstract void Undo(TIn input, TOut output);
     }
 }

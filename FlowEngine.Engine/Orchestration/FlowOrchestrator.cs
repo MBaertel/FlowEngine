@@ -1,54 +1,48 @@
-﻿using FlowEngine.Engine.Execution.Instances;
-using FlowEngine.Engine.Flows.Definitions;
+﻿using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Execution;
-using FlowEngine.Engine.Flows.Values;
 using FlowEngine.Engine.Steps;
-using System;
+using FlowEngine.Engine.Execution;
+using FlowEngine.Engine.Execution.Context;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using FlowEngine.Engine.Values;
-using FlowEngine.Engine.Serialization;
 
 namespace FlowEngine.Engine.Flows.Orchestration
 {
     public class FlowOrchestrator : IFlowOrchestrator
     {
-        private readonly ISubflowCallRegisty _callRegistry;
         private readonly IFlowDefinitionRegistry _definitionRegistry;
         private readonly IStepFactory _stepFactory;
 
         private readonly Dictionary<Guid, IFlowRunner> _activeRunners = new();
-        private readonly List<IFlowRunner> _runnersToStep = new();
+        private readonly ConcurrentQueue<IFlowRunner> _readyRunners = new();
+        private List<Task> _runningSteps = new();
+
         public IReadOnlyCollection<IFlowRunner> ActiveRunners => _activeRunners.Values.ToList().AsReadOnly();
 
-        public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry,IStepFactory stepFactory,ISubflowCallRegisty callRegisty)
+        public FlowOrchestrator(IFlowDefinitionRegistry definitionRegistry,IStepFactory stepFactory)
         {
             _definitionRegistry = definitionRegistry;
             _stepFactory = stepFactory;
-            _callRegistry = callRegisty;
         }
 
         public IFlowRunner AddFlow(IFlowDefinition flow, object input)
         {
-            var instance = new FlowInstance(_stepFactory, flow.Flow);
-            var context = new FlowContext(this, instance, _definitionRegistry,_callRegistry, input);
-            var runner = new FlowRunner<object>(instance, context);
+            var instance = new FlowInstance(flow, _stepFactory,input);
+            var context = new FlowContext(instance);
+            var runner = new FlowRunner<object>(instance,context,this,_definitionRegistry);
 
-            _activeRunners.Add(runner.RunnerId,runner);
+            _activeRunners.Add(runner.InstanceId,runner);
+            _readyRunners.Enqueue(runner);
             return runner;
         }
 
         public IFlowRunner<TResult> AddFlow<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TInput input)
         {
-            var instance = new FlowInstance(_stepFactory, flow.Flow);
-            var context = new FlowContext(this,instance, _definitionRegistry, _callRegistry, input);
-            var runner = new FlowRunner<TResult>(instance, context);
+            var instance = new FlowInstance(flow, _stepFactory,input);
+            var context = new FlowContext(instance);
+            var runner = new FlowRunner<TResult>(instance, context, this, _definitionRegistry);
 
-            _activeRunners.Add(runner.RunnerId,runner);
+            _activeRunners.Add(runner.InstanceId,runner);
+            _readyRunners.Enqueue(runner);
             return runner;
         }
 
@@ -71,25 +65,22 @@ namespace FlowEngine.Engine.Flows.Orchestration
             return await runner.WaitForCompletion();
         }
 
-        public Task StepAllAsync()
+        public async Task StepAllAsync(int maxRunnersPerTick = 1000)
         {
-            _runnersToStep.Clear();
-            _runnersToStep.AddRange(_activeRunners.Values);
+            int stepped = 0;
+            while (_readyRunners.TryDequeue(out var runner) && stepped < maxRunnersPerTick)
+            {
+                if (runner == null) continue;
+                await StepRunnerSafelyAsync(runner);
 
-            foreach (var runner in _runnersToStep)
-            {
-                if(runner != null && !runner.IsWaiting && !runner.IsCompleted)
+                if (runner.IsCompleted)
                 {
-                    //_ = StepRunnerSafelyAsync(runner);
-                    _ = StepRunnerSafelyAsync(runner);
+                    _activeRunners.Remove(runner.InstanceId);
+                    continue;
                 }
+
+                stepped++;
             }
-            var removeIds = _activeRunners.Values.Where(x => x.IsCompleted).Select(x => x.RunnerId);
-            foreach (var id in removeIds)
-            {
-                _activeRunners.Remove(id);
-            }
-            return Task.CompletedTask;
         }
 
         private async ValueTask StepRunnerSafelyAsync(IFlowRunner runner)
@@ -116,6 +107,12 @@ namespace FlowEngine.Engine.Flows.Orchestration
             if (_activeRunners.TryGetValue(instanceId, out var runner))
                 return runner;
             return null;
+        }
+
+        public void EnqueueRunner(IFlowRunner runner)
+        {
+            if (runner != null && !runner.IsCompleted && !_readyRunners.Contains(runner))
+                _readyRunners.Enqueue(runner);
         }
     }
 }

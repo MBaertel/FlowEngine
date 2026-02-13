@@ -10,7 +10,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
 {
     public interface IFlowOrchestrator
     {
-        Task StepAllAsync();
+        Task StepAllAsync(int maxRunnersPerTick = 1000);
         IReadOnlyCollection<IFlowRunner> ActiveRunners { get; }
         Task<object> ExecuteFlowAsync(IFlowDefinition flow, object input);
         Task<TResult> ExecuteFlowAsync<TInput, TResult>(IFlowDefinition<TInput, TResult> flow, TInput input);
@@ -20,5 +20,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
 
         public IFlowRunner<T> GetRunner<T>(Guid instanceId);
         public IFlowRunner GetRunner(Guid instanceId);
+
+        public void EnqueueRunner(IFlowRunner runner);
     }
 }

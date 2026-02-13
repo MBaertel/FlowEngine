@@ -19,7 +19,7 @@ namespace FlowEngine.Integration.Steps
             _system = system;
         }
 
-        public override async Task<TOut> ExecuteAsync(IFlowContext ctx, TIn input)
+        public override async Task<TOut> ExecuteAsync(IStepContext ctx, TIn input)
         {
             return await _system.RunAsync(input);
         }

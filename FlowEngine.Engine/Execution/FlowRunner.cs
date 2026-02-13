@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using FlowEngine.Engine.Execution;
 using FlowEngine.Engine.Execution.Context;
-using FlowEngine.Engine.Execution.Instances;
 using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
+using FlowEngine.Engine.Flows.Orchestration;
 using FlowEngine.Engine.Flows.Steps;
 using FlowEngine.Engine.Flows.Values;
 using FlowEngine.Engine.Values;
@@ -16,6 +18,9 @@ namespace FlowEngine.Engine.Flows.Execution
     {
         private TaskCompletionSource<TResult>? _tcs = 
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        private readonly IFlowDefinitionRegistry _definitionRegistry;
+        private readonly IFlowOrchestrator _orchestrator;
 
         private bool _isWaiting = false;
         private bool _isCompleted = false;
@@ -29,11 +34,15 @@ namespace FlowEngine.Engine.Flows.Execution
 
         public IFlowInstance Instance { get; }
         public IFlowContext Context { get; }
-        public Guid RunnerId { get; }
+        public Guid InstanceId { get; }
 
-        public FlowRunner(IFlowInstance instance,IFlowContext context)
+
+        public FlowRunner(IFlowInstance instance, IFlowContext context, IFlowOrchestrator orchestrator, IFlowDefinitionRegistry registry)
         {
-            RunnerId = instance.InstanceId;
+            _orchestrator = orchestrator;
+            _definitionRegistry = registry;
+
+            InstanceId = instance.InstanceId;
             Context = context;
             Instance = instance;
 
@@ -41,19 +50,41 @@ namespace FlowEngine.Engine.Flows.Execution
             _currentStep = instance.GetStep(_currentStepId);
         }
 
-        public async ValueTask StepAsync()
+        public Task StepAsync()
         {
-            if (_isFinished || _isWaiting) return;
-            
-            _isWaiting = true;
-            var stepResult = await _currentStep.ExecuteAsyncUntyped(Context, Context.Payload);
+            if (_isFinished || _isWaiting)
+                return Task.CompletedTask;
+
+            var stepContext = new StepContext(Instance, _orchestrator, _definitionRegistry, _currentStepId);
+            var stepTask = _currentStep.ExecuteAsyncUntyped(stepContext, Instance.Payload);
+
+            if (!stepTask.IsCompleted)
+            {
+                _isWaiting = true;
+                stepTask.ContinueWith(OnStepComplete, TaskContinuationOptions.ExecuteSynchronously);
+            }
+            else
+            {
+                _isWaiting = false;
+                var stepResult = stepTask.Result;
+                Advance(stepResult);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private void Advance(object stepResult)
+        {
             _isWaiting = false;
-
-            Context.Payload = stepResult;
-
-            var next = Instance.ResolveNext(_currentStepId, Context);
-
-            if (next == null)
+            Instance.Payload = stepResult;
+            if (Instance.TryResolveNext(_currentStepId, Context, out var next))
+            {
+                _currentStepId = next.StepNodeId;
+                _currentStep = Instance.GetStep(_currentStepId);
+                Instance.Payload = next.Input;
+                _orchestrator.EnqueueRunner(this);
+            }
+            else
             {
                 _isFinished = true;
                 if (Context.Payload is not TResult typed)
@@ -61,13 +92,13 @@ namespace FlowEngine.Engine.Flows.Execution
                 _tcs?.TrySetResult(typed);
                 return;
             }
-            else
-            {
-                _currentStep = next.Step;
-                _currentStepId = next.StepNodeId;
-                Context.Payload = next.Input;
-            }
         }
+
+        private void OnStepComplete(Task<object> task)
+        {
+            Advance(task.Result);
+        }
+            
 
         public Task<TResult> WaitForCompletion()
         {
@@ -83,11 +114,6 @@ namespace FlowEngine.Engine.Flows.Execution
                 _isCompleted = true;
                 return t.Result;
             });
-        }
-
-        public Guid GetCurrentStepId()
-        {
-            return _currentStepId; 
         }
 
         Task<object?> IFlowRunner.WaitForCompletion() =>

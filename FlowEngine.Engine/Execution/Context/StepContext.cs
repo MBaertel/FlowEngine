@@ -9,18 +9,29 @@ namespace FlowEngine.Engine.Execution.Context
 {
     public class StepContext : IStepContext
     {
+        private readonly IFlowInstance _instance;
         private readonly IFlowOrchestrator _orchestrator;
         private readonly IFlowDefinitionRegistry _flowRegisty;
 
-        public StepContext(IFlowOrchestrator orchestrator,IFlowDefinitionRegistry registry) 
+        private readonly Guid _stepId;
+        private int _callId = 0;
+
+        public StepContext(IFlowInstance instance,IFlowOrchestrator orchestrator,IFlowDefinitionRegistry registry,Guid stepId) 
         {
             _orchestrator = orchestrator;
             _flowRegisty = registry;
+            _instance = instance;
+            _stepId = stepId;
         }
 
         public FlowWait ExecuteSubflow(IFlowDefinition flowDefinition, object input)
         {
             var runner = _orchestrator.AddFlow(flowDefinition, input);
+
+            var subflowKey = new SubflowCallKey(_stepId, _callId);
+            _instance.RegisterSubflowCall(subflowKey, runner.Instance.InstanceId);
+            _callId++;
+
             var wait = new FlowWait(runner.Instance.InstanceId);
             wait.BindRunner(runner);
 
@@ -30,6 +41,11 @@ namespace FlowEngine.Engine.Execution.Context
         public FlowWait<TOut> ExecuteSubFlow<TIn, TOut>(IFlowDefinition<TIn, TOut> flowDefinition, TIn input)
         {
             var runner = _orchestrator.AddFlow<TIn,TOut>(flowDefinition, input);
+
+            var subflowKey = new SubflowCallKey(_stepId, _callId);
+            _instance.RegisterSubflowCall(subflowKey, runner.Instance.InstanceId);
+            _callId++;
+
             var wait = new FlowWait<TOut>(runner.Instance.InstanceId);
             wait.BindRunner(runner);
 

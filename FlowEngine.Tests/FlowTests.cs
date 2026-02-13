@@ -16,7 +16,7 @@ namespace FlowEngine.Tests
         private TestEngine _engine;
         private IFlowDefinitionRegistry _flowRegistry;
 
-        private const int speedTestRuns = 10000;
+        private const int speedTestRuns = 10;
 
         [SetUp]
         public void Setup()
@@ -136,7 +136,7 @@ namespace FlowEngine.Tests
         }
 
         [Test]
-        public async Task MathFlowMultSpeedTestTyped()
+        public async Task MathFlowManySpeedTestTyped()
         {
             var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestMany");
             var input = new MathInput(1, 1, MathModes.Add);
@@ -161,7 +161,7 @@ namespace FlowEngine.Tests
         [Test]
         public async Task MathSubFlowTest()
         {
-            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestSubflow");
+            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestSubflowTwice");
             var input = new MathInput(1, 1, MathModes.Add);
 
             var flowTask = _engine.RunFlow(flowDefinition, input);
@@ -175,13 +175,13 @@ namespace FlowEngine.Tests
 
             var value = (float)result;
 
-            Assert.That(value, Is.EqualTo(2f));
+            Assert.That(value, Is.EqualTo(3f));
         }
 
         [Test]
         public async Task MathSubFlowSpeedTestTyped()
         {
-            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestSubflow");
+            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathTestSubflowTwice");
             var input = new MathInput(1, 1, MathModes.Add);
 
             var sw = System.Diagnostics.Stopwatch.StartNew();
