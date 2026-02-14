@@ -7,6 +7,7 @@
   </PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\FlowEngine.Core\FlowEngine.Core.csproj" />
 		<ProjectReference Include="..\FlowEngine.Engine\FlowEngine.Engine.csproj" />
 	</ItemGroup>
 

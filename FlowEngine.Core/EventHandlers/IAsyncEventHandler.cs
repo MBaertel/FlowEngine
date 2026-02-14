@@ -8,12 +8,12 @@ namespace FlowEngine.Core.EventHandlers
     public interface IAsyncEventHandler
     : IEventHandler
     {
-        Task HandleAsync(IEvent evt,CancellationToken cancellationToken = default);
+        Task HandleAsync(IFlowEvent evt,CancellationToken cancellationToken = default);
     }
 
     public interface IAsyncEventHandler<TEvent>
         : IEventHandler<TEvent>, IAsyncEventHandler
-        where TEvent : IEvent
+        where TEvent : IFlowEvent
     {
         Task HandleAsync(TEvent evt, CancellationToken cancellationToken = default);
     }

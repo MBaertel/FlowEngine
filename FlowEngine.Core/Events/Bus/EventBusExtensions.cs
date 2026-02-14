@@ -16,7 +16,7 @@ namespace FlowEngine.Core.Events.Bus
         /// Subscribe Passthrough method to subscribe directly with a lambda.
         /// </summary>
         public static Guid Subscribe<TEvent>(this IEventBus eventBus,Action<TEvent> lambda)
-            where TEvent : IEvent
+            where TEvent : IFlowEvent
         {
             var handler = new LambdaEventHandler<TEvent>(lambda);
             return eventBus.Subscribe(handler);
@@ -26,7 +26,7 @@ namespace FlowEngine.Core.Events.Bus
         /// SubscribeAsync Passthrough method to subscribe directly with a lambda.
         /// </summary>
         public static Guid SubscribeAsync<TEvent>(this IEventBus eventBus,Func<TEvent,Task> lambda)
-            where TEvent : IEvent
+            where TEvent : IFlowEvent
         {
             var handler = new AsyncLambdaHandler<TEvent>(lambda);
             return eventBus.SubscribeAsync(handler);

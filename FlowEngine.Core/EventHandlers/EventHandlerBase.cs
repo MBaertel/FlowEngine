@@ -7,14 +7,14 @@ namespace FlowEngine.Core.EventHandlers
 {
     public abstract class EventHandlerBase<TEvent>
         : IEventHandler<TEvent>
-        where TEvent : IEvent
+        where TEvent : IFlowEvent
     {
-        public bool CanHandle(IEvent evt) =>
+        public bool CanHandle(IFlowEvent evt) =>
             typeof(TEvent).IsAssignableFrom(evt.GetType());
 
         public abstract void Handle(TEvent evt);
 
-        public void Handle(IEvent evt)
+        public void Handle(IFlowEvent evt)
         {
             if(CanHandle(evt) && evt is TEvent tevt)
                 Handle(tevt);

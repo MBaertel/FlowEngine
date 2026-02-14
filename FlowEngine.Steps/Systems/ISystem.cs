@@ -6,12 +6,14 @@ namespace FlowEngine.Integration.Systems
 {
     public interface ISystem
     {
-        string Name { get; }
-        Task<object> RunAsync(object input);
+        Type InputType { get; }
+
+        Type OutputType { get; }
+        public Task<object> RunAsync(object input);
     }
 
     public interface ISystem<TIn,TOut> : ISystem
     {
-        Task<TOut> RunAsync(TIn input);
+        public Task<TOut> RunAsync(TIn input);
     }
 }

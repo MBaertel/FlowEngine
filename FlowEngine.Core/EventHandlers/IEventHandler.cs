@@ -7,13 +7,13 @@ namespace FlowEngine.Core.EventHandlers
 {
     public interface IEventHandler
     {
-        bool CanHandle(IEvent evt);
-        void Handle(IEvent evt);
+        bool CanHandle(IFlowEvent evt);
+        void Handle(IFlowEvent evt);
     }
 
     public interface IEventHandler<TEvent>
         : IEventHandler
-        where TEvent : IEvent
+        where TEvent : IFlowEvent
     {
         void Handle(TEvent evt);
     }

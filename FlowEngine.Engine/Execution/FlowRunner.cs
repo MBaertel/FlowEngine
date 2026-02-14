@@ -22,9 +22,9 @@ namespace FlowEngine.Engine.Flows.Execution
         private readonly IFlowDefinitionRegistry _definitionRegistry;
         private readonly IFlowOrchestrator _orchestrator;
 
+        private bool _isFinished = false;
         private bool _isWaiting = false;
         private bool _isCompleted = false;
-        private bool _isFinished = false;
 
         private IFlowStep _currentStep;
         private Guid _currentStepId;
@@ -50,10 +50,9 @@ namespace FlowEngine.Engine.Flows.Execution
             _currentStep = instance.GetStep(_currentStepId);
         }
 
-        public Task StepAsync()
+        public async Task StepAsync()
         {
-            if (_isFinished || _isWaiting)
-                return Task.CompletedTask;
+            if (_isFinished || _isWaiting) return;
 
             var stepContext = new StepContext(Instance, _orchestrator, _definitionRegistry, _currentStepId);
             var stepTask = _currentStep.ExecuteAsyncUntyped(stepContext, Instance.Payload);
@@ -61,16 +60,14 @@ namespace FlowEngine.Engine.Flows.Execution
             if (!stepTask.IsCompleted)
             {
                 _isWaiting = true;
-                stepTask.ContinueWith(OnStepComplete, TaskContinuationOptions.ExecuteSynchronously);
+                var stepResutl = await stepTask;
+                Advance(stepResutl);
             }
             else
             {
-                _isWaiting = false;
                 var stepResult = stepTask.Result;
                 Advance(stepResult);
             }
-
-            return Task.CompletedTask;
         }
 
         private void Advance(object stepResult)
@@ -82,7 +79,6 @@ namespace FlowEngine.Engine.Flows.Execution
                 _currentStepId = next.StepNodeId;
                 _currentStep = Instance.GetStep(_currentStepId);
                 Instance.Payload = next.Input;
-                _orchestrator.EnqueueRunner(this);
             }
             else
             {
@@ -92,11 +88,6 @@ namespace FlowEngine.Engine.Flows.Execution
                 _tcs?.TrySetResult(typed);
                 return;
             }
-        }
-
-        private void OnStepComplete(Task<object> task)
-        {
-            Advance(task.Result);
         }
             
 

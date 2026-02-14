@@ -16,28 +16,28 @@ namespace FlowEngine.Core.Events.Bus
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid Subscribe<TEvent>(IEventHandler handler)
-            where TEvent : IEvent;
+            where TEvent : IFlowEvent;
 
         /// <summary>
         /// Subscribe to the Event Bus with a Generic Handler.
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid Subscribe<TEvent>(IEventHandler<TEvent> handler)
-            where TEvent : IEvent;
+            where TEvent : IFlowEvent;
 
         /// <summary>
         /// Subscribe to the Event Bus with a non-generic Async Handler.
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid SubscribeAsync<TEvent>(IAsyncEventHandler handler)
-            where TEvent : IEvent;
+            where TEvent : IFlowEvent;
 
         /// <summary>
         /// Subscribe to the Event Bus with a Generic Async Handler.
         /// </summary>
         /// <returns>Unique Subscription Identifier</returns>
         Guid SubscribeAsync<TEvent>(IAsyncEventHandler<TEvent> handler)
-            where TEvent : IEvent;
+            where TEvent : IFlowEvent;
 
         /// <summary>
         /// Unsubscribe from the bus via Handler Reference.
@@ -52,11 +52,11 @@ namespace FlowEngine.Core.Events.Bus
         /// <summary>
         /// Publish an event Synchronously.
         /// </summary>
-        void Publish(IEvent evt);
+        void Publish(IFlowEvent evt);
 
         /// <summary>
         /// Publish an event Asynchronously.
         /// </summary>
-        Task PublishAsync(IEvent evt,CancellationToken cancellationToken = default);
+        Task PublishAsync(IFlowEvent evt,CancellationToken cancellationToken = default);
     }
 }

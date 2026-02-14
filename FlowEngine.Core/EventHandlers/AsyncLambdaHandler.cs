@@ -7,7 +7,7 @@ namespace FlowEngine.Core.EventHandlers
 {
     public class AsyncLambdaHandler<TEvent>
         : AsyncEventHandlerBase<TEvent>
-        where TEvent : IEvent
+        where TEvent : IFlowEvent
     {
         private readonly Func<TEvent, CancellationToken, Task> _lambda;
         public AsyncLambdaHandler(Func<TEvent,Task> lambda)

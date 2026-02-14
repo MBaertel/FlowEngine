@@ -12,7 +12,7 @@ namespace FlowEngine.Core.Events.Bus
         private readonly List<IAsyncEventHandler> _asyncHandlers = new();
         private readonly Dictionary<Guid, IEventHandler> _handlerIds = new();
 
-        public void Publish(IEvent evt)
+        public void Publish(IFlowEvent evt)
         {
             foreach (var handler in _syncHandlers)
             {
@@ -21,7 +21,7 @@ namespace FlowEngine.Core.Events.Bus
             }
         }
 
-        public async Task PublishAsync(IEvent evt, CancellationToken cancellationToken = default)
+        public async Task PublishAsync(IFlowEvent evt, CancellationToken cancellationToken = default)
         {
             foreach(var handler in _asyncHandlers)
             {
@@ -31,7 +31,7 @@ namespace FlowEngine.Core.Events.Bus
         }
 
         public Guid Subscribe<TEvent>(IEventHandler handler) 
-            where TEvent : IEvent
+            where TEvent : IFlowEvent
         {
             if(!_syncHandlers.Contains(handler))
                 _syncHandlers.Add(handler);
@@ -41,12 +41,12 @@ namespace FlowEngine.Core.Events.Bus
             return newId;
         }
 
-        public Guid Subscribe<TEvent>(IEventHandler<TEvent> handler) where TEvent : IEvent
+        public Guid Subscribe<TEvent>(IEventHandler<TEvent> handler) where TEvent : IFlowEvent
         {
             return Subscribe<TEvent>(handler as IEventHandler);
         }
 
-        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler handler) where TEvent : IEvent
+        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler handler) where TEvent : IFlowEvent
         {
             if (!_asyncHandlers.Contains(handler))
                 _asyncHandlers.Add(handler);
@@ -56,7 +56,7 @@ namespace FlowEngine.Core.Events.Bus
             return newId;
         }
 
-        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler<TEvent> handler) where TEvent : IEvent
+        public Guid SubscribeAsync<TEvent>(IAsyncEventHandler<TEvent> handler) where TEvent : IFlowEvent
         {
             return Subscribe<TEvent>(handler as IAsyncEventHandler);
         }

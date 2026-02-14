@@ -30,41 +30,7 @@ namespace FlowEngine.Tests.EngineTests.TestFlows
         }
     }
 
-    internal class MathSubflowTwiceTestFlow : FlowDefinitionBase<MathInput, float>
-    {
-        public override string Name => "MathTestSubflowTwice";
-
-        protected override FlowGraph BuildFlow()
-        {
-            var mathNode = new FlowNode(
-                Guid.NewGuid(),
-                typeof(TestSubflowStep));
-
-            var mathNode2 = new FlowNode(
-                Guid.NewGuid(),
-                typeof(TestSubflowStep));
-
-            var nodes = new FlowNode[]
-            {
-                mathNode,
-                mathNode2
-            };
-
-            var edge = new FlowEdge(Guid.NewGuid(), mathNode.Id, mathNode2.Id);
-            var edges = new FlowEdge[]
-            {
-                edge
-            };
-            var transformers = new FlowTransformer[]
-            {
-                new FlowTransformer(edge.Id,(x,y) => new MathInput((float)y,1,MathModes.Add))
-            };
-
-            return new FlowGraph(mathNode.Id, nodes, edges, transformers);
-        }
-    }
-
-    public class MathSubflowTestMany : FlowDefinitionBase<MathInput, float>
+    internal class MathSubflowTestMany : FlowDefinitionBase<MathInput, float>
     {
         public override string Name => "MathSubflowTestMany";
 

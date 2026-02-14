@@ -7,7 +7,7 @@ namespace FlowEngine.Core.EventHandlers
 {
     public class LambdaEventHandler<TEvent>
         : EventHandlerBase<TEvent>
-        where TEvent : IEvent
+        where TEvent : IFlowEvent
     {
         private readonly Action<TEvent> _lambda;
         public LambdaEventHandler(Action<TEvent> lambda)
