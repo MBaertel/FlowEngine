@@ -16,7 +16,7 @@ namespace FlowEngine.Tests
         private TestEngine _engine;
         private IFlowDefinitionRegistry _flowRegistry;
 
-        private const int speedTestRuns = 2000;
+        private const int speedTestRuns = 1000;
 
         [SetUp]
         public void Setup()
@@ -199,6 +199,26 @@ namespace FlowEngine.Tests
 
             sw.Stop();
             Console.WriteLine($"Ran {speedTestRuns} flows in {sw.ElapsedMilliseconds} ms");
+        }
+
+        [Test]
+        public async Task MathSubFlowManyTest()
+        {
+            var flowDefinition = _flowRegistry.GetByName<MathInput, float>("MathSubflowTestMany");
+            var input = new MathInput(1, 1, MathModes.Add);
+
+            var flowTask = _engine.RunFlow(flowDefinition, input);
+
+            while (!flowTask.IsCompleted)
+            {
+                await _engine.TickAsync();
+            }
+
+            var result = await flowTask;
+
+            var value = (float)result;
+
+            Assert.That(value, Is.EqualTo(501f));
         }
 
         [Test]

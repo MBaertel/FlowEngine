@@ -10,13 +10,17 @@ namespace FlowEngine.Core.Events
         public virtual string Name => this.GetType().Name;
     }
 
-    public abstract class BeforeEventBase<TEvent> 
-        : EventBase, IBeforeEvent<TEvent>
+    public abstract class BeforeEventBase<TEvent>
+        : EventBase, IBeforeEvent
         where TEvent : IFlowEvent
-    { }
+    {
+        public Type MainEventType => typeof(TEvent);
+    }
 
     public abstract class AfterEventBase<TEvent>
-    : EventBase, IAfterEvent<TEvent>
+    : EventBase, IAfterEvent
     where TEvent : IFlowEvent
-    { }
+    {
+        public Type MainEventType => typeof(TEvent);
+    }
 }

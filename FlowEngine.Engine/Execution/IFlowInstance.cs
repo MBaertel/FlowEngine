@@ -17,11 +17,17 @@ namespace FlowEngine.Engine.Execution
         Guid StartStepId { get; }
         Guid CurrentStepId { get; set; }
 
+        FlowStatus Status { get; set; }
+
         object Payload { get; set; }
         IDictionary<string,object?> Variables { get; }
+        
+        IList<HistoryFrame> History { get; }
+
+        IDictionary<SubflowCallKey,FlowAwaiterBase> ActiveAwaiters { get; }
 
         IFlowStep GetStep(Guid stepId);
-        bool TryResolveNext(Guid currentStepId, IFlowContext ctx, out NextStepResult next);
+        bool TryResolveNext(Guid currentStepId, out NextStepResult next);
 
         void RegisterSubflowCall(SubflowCallKey key, Guid childInstanceId);
         bool TryGetSubflowCall(SubflowCallKey key, out Guid childInstanceId);

@@ -16,98 +16,95 @@ namespace FlowEngine.Engine.Flows.Execution
 {
     public class FlowRunner<TResult> : IFlowRunner<TResult>
     {
-        private TaskCompletionSource<TResult>? _tcs = 
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        private readonly IFlowDefinitionRegistry _definitionRegistry;
         private readonly IFlowOrchestrator _orchestrator;
-
-        private bool _isFinished = false;
-        private bool _isWaiting = false;
-        private bool _isCompleted = false;
-
-        private IFlowStep _currentStep;
-        private Guid _currentStepId;
-
-        public bool IsWaiting => _isWaiting;
-        public bool IsCompleted => _isCompleted;
+        private readonly IFlowDefinitionRegistry _definitionRegistry;
+        private TaskCompletionSource<TResult> _tcs;
 
         public IFlowInstance Instance { get; }
-        public IFlowContext Context { get; }
-        public Guid InstanceId { get; }
-
-
-        public FlowRunner(IFlowInstance instance, IFlowContext context, IFlowOrchestrator orchestrator, IFlowDefinitionRegistry registry)
+        public FlowStatus Status
         {
+            get => Instance.Status;
+            private set => Instance.Status = value;
+        }
+
+        public FlowRunner(IFlowOrchestrator orchestrator,IFlowDefinitionRegistry registry,IFlowInstance instance)
+        {
+            Instance = instance;
             _orchestrator = orchestrator;
             _definitionRegistry = registry;
-
-            InstanceId = instance.InstanceId;
-            Context = context;
-            Instance = instance;
-
-            _currentStepId = instance.StartStepId;
-            _currentStep = instance.GetStep(_currentStepId);
         }
 
-        public async Task StepAsync()
+        public async Task StepAsync(CancellationToken ct = default)
         {
-            if (_isFinished || _isWaiting) return;
-
-            var stepContext = new StepContext(Instance, _orchestrator, _definitionRegistry, _currentStepId);
-            var stepTask = _currentStep.ExecuteAsyncUntyped(stepContext, Instance.Payload);
-
-            if (!stepTask.IsCompleted)
-            {
-                _isWaiting = true;
-                var stepResutl = await stepTask;
-                Advance(stepResutl);
-            }
-            else
-            {
-                var stepResult = stepTask.Result;
-                Advance(stepResult);
-            }
-        }
-
-        private void Advance(object stepResult)
-        {
-            _isWaiting = false;
-            Instance.Payload = stepResult;
-            if (Instance.TryResolveNext(_currentStepId, Context, out var next))
-            {
-                _currentStepId = next.StepNodeId;
-                _currentStep = Instance.GetStep(_currentStepId);
-                Instance.Payload = next.Input;
-            }
-            else
-            {
-                _isFinished = true;
-                if (Context.Payload is not TResult typed)
-                    throw new InvalidOperationException($"Flow completed with {Context.Payload.GetType()}, expected {typeof(TResult)}");
-                _tcs?.TrySetResult(typed);
+            if (Status == FlowStatus.Completed || Status == FlowStatus.Faulted || Status == FlowStatus.Waiting)
                 return;
+            
+            if (Status == FlowStatus.Inactive) 
+                Status = FlowStatus.Running;
+
+            var step = Instance.GetStep(Instance.CurrentStepId);
+
+            try
+            {
+                Status = FlowStatus.Waiting;
+                var stepContext = new StepContext(Instance,_orchestrator,_definitionRegistry,Instance.CurrentStepId);
+                var stepResult = await step.ExecuteAsyncUntyped(stepContext,Instance.Payload);
+                Instance.Payload = stepResult;
+
+                var frame = new HistoryFrame
+                {
+                    StepType = step.GetType(),
+                    StepInstanceId = Instance.CurrentStepId,
+                    StepOutput = stepResult,
+                    RequiredUndoVariables = stepContext.UndoRequiredValues.ToDictionary()
+                };
+                Instance.History.Add(frame);
+
+                Advance();
+            }
+            catch (Exception ex)
+            {
+                Instance.Status = FlowStatus.Faulted;
+                throw;
             }
         }
-            
+
+        public Task UndoAsync(int steps = int.MaxValue, CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
+        }
 
         public Task<TResult> WaitForCompletion()
         {
-            if (_isFinished)
-            {
-                _isCompleted = true;
-                return Task.FromResult((TResult)Context.Payload!);
-            }
+            if (Instance.Status == FlowStatus.Completed)
+                return Task.FromResult((TResult)Instance.Payload);
 
-            _tcs ??= new TaskCompletionSource<TResult>();
-            return _tcs.Task.ContinueWith(t =>
-            {
-                _isCompleted = true;
-                return t.Result;
-            });
+            _tcs ??= new TaskCompletionSource<TResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+            return _tcs.Task;
         }
 
-        Task<object?> IFlowRunner.WaitForCompletion() =>
-            WaitForCompletion().ContinueWith(t => (object?) t.Result);
+        async Task<object> IFlowRunner.WaitForCompletion()
+        {
+            return await WaitForCompletion();
+        }
+
+        private void Advance()
+        {
+            if(Instance.TryResolveNext(Instance.CurrentStepId,out var next))
+            {
+                Instance.CurrentStepId = next.StepId;
+                Instance.Payload = next.Input;
+                Instance.ActiveAwaiters.Clear();
+                Status = FlowStatus.Running;
+            }
+            else
+            {
+                Status = FlowStatus.Completed;
+                if (Instance.Payload is TResult typedPayload)
+                    _tcs.TrySetResult(typedPayload);
+                else
+                    _tcs.SetException(new InvalidCastException($"Result was {Instance.Payload.GetType()}, expected {typeof(TResult)}"));
+            }
+        }
     }
 }

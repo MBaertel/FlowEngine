@@ -15,12 +15,16 @@ namespace FlowEngine.Engine.Execution
         public Guid InstanceId { get; init; } = Guid.NewGuid();
         public IFlowDefinition Definition { get; init; }
 
+        public FlowStatus Status { get; set; }
+        public IList<HistoryFrame> History { get; set; } = new List<HistoryFrame>();
+        public IDictionary<SubflowCallKey, FlowAwaiterBase> ActiveAwaiters { get; set; } = new Dictionary<SubflowCallKey,FlowAwaiterBase>();
+
+
         public Guid StartStepId => _graph.StartNodeId;
         public Guid CurrentStepId { get; set; }
         
         public object Payload { get; set; }
         public IDictionary<string, object?> Variables { get; } = new Dictionary<string, object?>();
-
 
         private readonly Dictionary<SubflowCallKey, Guid> _subflowCalls = new();
         private readonly IStepFactory _stepFactory;
@@ -30,6 +34,7 @@ namespace FlowEngine.Engine.Execution
         {
             _stepFactory = stepFactory;
             _graph = definition.Flow;
+            Definition = definition;
 
             CurrentStepId = _graph.StartNodeId;
             Payload = payload;
@@ -41,9 +46,10 @@ namespace FlowEngine.Engine.Execution
             return _stepFactory.Resolve(node.StepType);
         }
 
-        public bool TryResolveNext(Guid currentStepId, IFlowContext ctx,out NextStepResult next)
+        public bool TryResolveNext(Guid currentStepId,out NextStepResult next)
         {
             next = null;
+            var ctx = new FlowContext(this);
             
             var edge = _graph.GetNextEdge(currentStepId, ctx);
             if (edge == null) return false;

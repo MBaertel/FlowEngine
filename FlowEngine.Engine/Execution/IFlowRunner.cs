@@ -7,19 +7,20 @@ using FlowEngine.Engine.Flows.Definitions;
 using FlowEngine.Engine.Flows.Graphs;
 using FlowEngine.Engine.Flows.Steps;
 using FlowEngine.Engine.Flows.Values;
+using FlowEngine.Engine.Values;
 
 namespace FlowEngine.Engine.Flows.Execution
 {
     public interface IFlowRunner
     {
-        Guid InstanceId { get; }
-
         IFlowInstance Instance { get; }
 
-        bool IsWaiting { get; }
-        bool IsCompleted { get; }
-        
-        Task StepAsync();
+        FlowStatus Status { get; }
+     
+        Task StepAsync(CancellationToken ct = default);
+
+        Task UndoAsync(int steps = int.MaxValue, CancellationToken ct = default);
+
         Task<object> WaitForCompletion();
     }
 

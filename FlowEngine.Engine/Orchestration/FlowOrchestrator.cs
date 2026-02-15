@@ -4,6 +4,7 @@ using FlowEngine.Engine.Steps;
 using FlowEngine.Engine.Execution;
 using FlowEngine.Engine.Execution.Context;
 using System.Collections.Concurrent;
+using FlowEngine.Engine.Values;
 
 namespace FlowEngine.Engine.Flows.Orchestration
 {
@@ -14,6 +15,7 @@ namespace FlowEngine.Engine.Flows.Orchestration
 
         private readonly Dictionary<Guid, IFlowRunner> _runnersById = new();
         private readonly List<IFlowRunner> _activeRunners = new();
+        private readonly ConcurrentQueue<Exception> _faults = new();
 
         public IReadOnlyCollection<IFlowRunner> ActiveRunners => _runnersById.Values.ToList().AsReadOnly();
 
@@ -26,10 +28,9 @@ namespace FlowEngine.Engine.Flows.Orchestration
         public IFlowRunner AddFlow(IFlowDefinition flow, object input)
         {
             var instance = new FlowInstance(flow, _stepFactory,input);
-            var context = new FlowContext(instance);
-            var runner = new FlowRunner<object>(instance,context,this,_definitionRegistry);
+            var runner = new FlowRunner<object>(this,_definitionRegistry,instance);
 
-            _runnersById.Add(runner.InstanceId,runner);
+            _runnersById.Add(instance.InstanceId,runner);
             _activeRunners.Add(runner);
             return runner;
         }
@@ -38,9 +39,9 @@ namespace FlowEngine.Engine.Flows.Orchestration
         {
             var instance = new FlowInstance(flow, _stepFactory,input);
             var context = new FlowContext(instance);
-            var runner = new FlowRunner<TResult>(instance, context, this, _definitionRegistry);
+            var runner = new FlowRunner<TResult>(this, _definitionRegistry, instance);
 
-            _runnersById.Add(runner.InstanceId,runner);
+            _runnersById.Add(instance.InstanceId,runner);
             _activeRunners.Add(runner);
             return runner;
         }
@@ -64,32 +65,38 @@ namespace FlowEngine.Engine.Flows.Orchestration
             return await runner.WaitForCompletion();
         }
 
-        public async Task StepAllAsync()
+        public Task StepAllAsync()
         {
             for (int i = 0; i < _activeRunners.Count; i++)
             {
                 var runner = _activeRunners[i];
-                if (runner == null || !runner.IsWaiting)
-                    runner.StepAsync();
-
-                if (runner.IsCompleted)
+                if (runner != null && (runner.Status == FlowStatus.Running || runner.Status == FlowStatus.Inactive))
                 {
-                    _activeRunners.Remove(runner);
-                    _runnersById.Remove(runner.InstanceId);
+                    var stepTask = runner.StepAsync();
+                    Observe(stepTask);
                 }
             }
+
+            if (_faults.TryDequeue(out var ex))
+                throw ex;
+
+            return Task.CompletedTask;
         }
 
-        private async ValueTask StepRunnerSafelyAsync(IFlowRunner runner)
+        private void Observe(Task task)
         {
-            try
+            if (task.IsCompleted)
             {
-                await runner.StepAsync();
+                if (task.IsFaulted)
+                    _faults.Enqueue(task.Exception);
+                return;
             }
-            catch (Exception ex)
+
+            task.ContinueWith(t =>
             {
-                Console.Error.WriteLine(ex.ToString());
-            }
+                _faults.Enqueue(t.Exception);
+            },
+            TaskContinuationOptions.OnlyOnFaulted);
         }
 
         public IFlowRunner<T>? GetRunner<T>(Guid instanceId)

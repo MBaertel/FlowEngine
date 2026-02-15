@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FlowEngine.Engine.Execution
+namespace FlowEngine.Engine.Values
 {
     public sealed record NextStepResult (
-        Guid StepNodeId,
+        Guid StepId,
         object Input);
 }

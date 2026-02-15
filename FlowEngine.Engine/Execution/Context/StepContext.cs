@@ -24,32 +24,32 @@ namespace FlowEngine.Engine.Execution.Context
             _stepId = stepId;
         }
 
-        public FlowWait ExecuteSubflow(IFlowDefinition flowDefinition, object input)
+        public IDictionary<string, object?> UndoRequiredValues { get; } = new Dictionary<string, object?>();
+
+        public async Task<object> ExecuteSubflow(IFlowDefinition flowDefinition, object input)
         {
-            var runner = _orchestrator.AddFlow(flowDefinition, input);
-
-            var subflowKey = new SubflowCallKey(_stepId, _callId);
-            _instance.RegisterSubflowCall(subflowKey, runner.Instance.InstanceId);
-            _callId++;
-
-            var wait = new FlowWait(runner.Instance.InstanceId);
-            wait.BindRunner(runner);
-
-            return wait;
+            throw new NotImplementedException();
         }
 
-        public FlowWait<TOut> ExecuteSubFlow<TIn, TOut>(IFlowDefinition<TIn, TOut> flowDefinition, TIn input)
+        public Task<TOut> ExecuteSubFlow<TIn, TOut>(IFlowDefinition<TIn, TOut> flowDefinition, TIn input)
         {
-            var runner = _orchestrator.AddFlow<TIn,TOut>(flowDefinition, input);
+            FlowAwaiter<TOut> finalAwaiter;
+            var subflowCallKey = new SubflowCallKey(flowDefinition.Id, _callId);
+            if (_instance.ActiveAwaiters.TryGetValue(subflowCallKey, out var awaiter)
+                && awaiter != null)
+            {
+                var runner = _orchestrator.GetRunner(awaiter.SubflowInstanceId);
+                finalAwaiter = (FlowAwaiter<TOut>)awaiter;
+                finalAwaiter.ConnectRunner(runner);
+            }
+            else
+            {
+                var runner = _orchestrator.AddFlow(flowDefinition,input);
+                finalAwaiter = new FlowAwaiter<TOut>(runner);
+                _instance.ActiveAwaiters[subflowCallKey] = finalAwaiter;
+            }
 
-            var subflowKey = new SubflowCallKey(_stepId, _callId);
-            _instance.RegisterSubflowCall(subflowKey, runner.Instance.InstanceId);
-            _callId++;
-
-            var wait = new FlowWait<TOut>(runner.Instance.InstanceId);
-            wait.BindRunner(runner);
-
-            return wait;
+            return finalAwaiter.AsTask();
         }
 
         public IFlowDefinition GetFlowById(Guid id) =>
