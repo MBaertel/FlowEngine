@@ -1,11 +1,12 @@
 ﻿using FlowEngine.Core.Events;
+using FlowEngine.Integration.Converters;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace FlowEngine.Integration.Converters
+namespace FlowEngine.Integration.Services
 {
     public class ConverterRegistry : IConverterRegistry
     {
@@ -20,7 +21,7 @@ namespace FlowEngine.Integration.Converters
             }
         }
 
-        public void Register(IEventConverter converter) =>
+        public void RegisterConverter(IEventConverter converter) =>
             _converters[converter.ItemType] = converter;
 
         public bool TryGetConverter(Type itemType, out IEventConverter converter)

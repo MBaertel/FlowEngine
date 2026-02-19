@@ -9,7 +9,7 @@ using System.Text;
 
 namespace FlowEngine.Core
 {
-    public class Engine : EngineBase
+    public class StandardEngine : EngineBase
     {
         private readonly ICommandRouter _commandRouter;
 

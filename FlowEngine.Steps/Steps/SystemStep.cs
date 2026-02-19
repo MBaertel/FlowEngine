@@ -2,7 +2,7 @@
 using FlowEngine.Core.Events.Bus;
 using FlowEngine.Engine.Execution.Context;
 using FlowEngine.Engine.Flows.Steps;
-using FlowEngine.Integration.Converters;
+using FlowEngine.Integration.Services;
 using FlowEngine.Integration.Systems;
 using System;
 using System.Collections.Generic;
@@ -10,22 +10,26 @@ using System.Text;
 
 namespace FlowEngine.Integration.Steps
 {
-    public class SystemStep<TIn, TOut,TSystem, TBefore, TAfter>
+    public class SystemStep<TIn, TOut, TBefore, TAfter>
         : IFlowStep<TIn, TOut>
-        where TSystem : ISystem<TIn,TOut>
         where TBefore : IBeforeEvent
         where TAfter : IAfterEvent
     {
-        private TSystem _system;
-        private IConverterRegistry _registry;
+        private ISystemRegistry _systemRegistry;
+        private IConverterRegistry _converterRegistry;
         private IEventBus _eventBus;
 
-
-        public SystemStep(TSystem system,IConverterRegistry converterRegistry, IEventBus eventBus)
+        private ISystem<TIn, TOut> _system;
+        public SystemStep(ISystemRegistry systemRegistry,IConverterRegistry converterRegistry, IEventBus eventBus)
         {
-            _system = system;
+            _systemRegistry = systemRegistry;
             _eventBus = eventBus;
-            _registry = converterRegistry;
+            _converterRegistry = converterRegistry;
+
+            if (_systemRegistry.TryGetSystem<TIn, TOut>(out var sys))
+                _system = sys;
+            else
+                throw new InvalidOperationException($"System with input type {typeof(TIn)} and output type {typeof(TOut)} not found.");
         }
 
         public async Task<TOut> ExecuteAsync(IStepContext ctx, TIn input)
@@ -38,7 +42,7 @@ namespace FlowEngine.Integration.Steps
 
         private async Task<TIn> RaiseBeforeEvent(TIn input)
         {
-            if(_registry.TryGetConverter<TIn,TBefore>(out var converter))
+            if(_converterRegistry.TryGetConverter<TIn,TBefore>(out var converter))
             {
                 var evt = converter.Convert(input);
                 await _eventBus.PublishAsync(evt);
@@ -50,7 +54,7 @@ namespace FlowEngine.Integration.Steps
 
         private async Task<TOut> RaiseAfterEvent(TOut output)
         {
-            if (_registry.TryGetConverter<TOut, TAfter>(out var converter))
+            if (_converterRegistry.TryGetConverter<TOut, TAfter>(out var converter))
             {
                 var evt = converter.Convert(output);
                 await _eventBus.PublishAsync(evt);

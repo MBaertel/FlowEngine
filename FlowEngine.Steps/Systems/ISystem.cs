@@ -6,6 +6,7 @@ namespace FlowEngine.Integration.Systems
 {
     public interface ISystem
     {
+        string Name { get; }
         Type InputType { get; }
 
         Type OutputType { get; }

@@ -1,9 +1,10 @@
 ﻿using FlowEngine.Core.Events;
+using FlowEngine.Integration.Converters;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FlowEngine.Integration.Converters
+namespace FlowEngine.Integration.Services
 {
     public interface IConverterRegistry
     {
@@ -11,6 +12,6 @@ namespace FlowEngine.Integration.Converters
         bool TryGetConverter<TItem, TEvent>(out IEventConverter<TItem,TEvent> converter)
             where TEvent : IFlowEvent;
 
-        void Register(IEventConverter converter);
+        void RegisterConverter(IEventConverter converter);
     }
 }

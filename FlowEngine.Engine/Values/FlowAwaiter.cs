@@ -36,8 +36,8 @@ namespace FlowEngine.Engine.Values
 
         private IFlowRunner<TResult> _runner;
 
-        public FlowAwaiter(Guid instanceId)
-            : base(instanceId)
+        public FlowAwaiter(Guid SubflowInstanceId)
+            : base(SubflowInstanceId)
         { }
 
         public FlowAwaiter(IFlowRunner<TResult> runner)
@@ -61,5 +61,5 @@ namespace FlowEngine.Engine.Values
 
             return _runner.WaitForCompletion();
         }
-    }
+    } 
 }

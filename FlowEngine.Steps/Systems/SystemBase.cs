@@ -7,6 +7,7 @@ namespace FlowEngine.Integration.Systems
     public abstract class SystemBase<TIn, TOut>
         : ISystem<TIn, TOut>
     {
+        public abstract string Name { get; }
         public Type InputType => typeof(TIn);
         public Type OutputType => typeof(TOut);
 
