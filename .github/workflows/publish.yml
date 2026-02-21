@@ -26,7 +26,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build FlowEngine.slnx -c Release --no-restore
+        run: dotnet build FlowEngine.sln -c Release --no-restore
       
       - name: Pack
         run: dotnet pack FlowEngine.sln -c Release -p:PackageVersion=${{ github.ref_name }}
