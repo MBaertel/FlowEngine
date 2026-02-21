@@ -6,6 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<PackageId>FlowEngine.Integration</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>Macroni</Authors>
+		<Description>Basic Implementation Collection</Description>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\FlowEngine.Core\FlowEngine.Core.csproj" />
 		<ProjectReference Include="..\FlowEngine.Engine\FlowEngine.Engine.csproj" />
