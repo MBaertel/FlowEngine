@@ -29,5 +29,4 @@ jobs:
         run: dotnet build FlowEngine.slnx -c Release --no-restore
       
       - name: Pack
-        run: dotnet pack FlowEngine.slnx -c Release --no-build \
-             -p:PackageVersion=${GITHUB_REF#refs/tags/v}
+        run: dotnet pack FlowEngine.sln -c Release -p:PackageVersion=${{ github.ref_name }}
