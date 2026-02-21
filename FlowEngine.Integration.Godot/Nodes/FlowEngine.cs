@@ -25,7 +25,7 @@ namespace FlowEngine.Integration.Godot.Nodes
         public FlowEngine() 
             : base()
         {
-            _flowEngine = new StandardEngine();
+            _flowEngine = new DefaultEngine();
         }
 
         public override void _Ready()
