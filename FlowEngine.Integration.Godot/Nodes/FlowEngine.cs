@@ -11,14 +11,18 @@ using FlowEngine.Integration.Converters;
 
 namespace FlowEngine.Integration.Godot.Nodes
 {
-    public class FlowEngineNode : Node
+    [GlobalClass]
+    public class FlowEngine : Node
     {
         private EngineBase _flowEngine;
         private ISystemRegistry _systemRegistry;
+        private IServiceRegistry _serviceRegistry;
         private IConverterRegistry _converterRegistry;
         private IDecisionManager _decisionManager;
 
-        public FlowEngineNode() 
+        public IServiceRegistry StateServices => _serviceRegistry;
+
+        public FlowEngine() 
             : base()
         {
             _flowEngine = new StandardEngine();
@@ -53,10 +57,14 @@ namespace FlowEngine.Integration.Godot.Nodes
             }
         }
 
-        protected void RegisterSystem(ISystem system) =>
+        public void RegisterSystem(ISystem system) =>
             _systemRegistry.RegisterSystem(system);
 
-        protected void RegisterConverter(IEventConverter converter) =>
+        public void RegisterService(IGameStateService service) =>
+            _serviceRegistry.RegisterService(service);
+
+        public void RegisterConverter(IEventConverter converter) =>
             _converterRegistry.RegisterConverter(converter);
+
     }
 }

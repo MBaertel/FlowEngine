@@ -4,8 +4,8 @@ using System.Text;
 
 namespace FlowEngine.Integration.Services
 {
-    public interface IStateService
+    public interface IGameStateService
     {
-
+        public string Name { get; }
     }
 }

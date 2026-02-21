@@ -1,4 +1,5 @@
-﻿using FlowEngine.Integration.Godot.Services;
+﻿using FlowEngine.Integration.Godot;
+using FlowEngine.Integration.Services;
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -8,21 +9,22 @@ using System.Threading.Tasks;
 
 namespace FlowEngine.Integration.Godot.Nodes.Base
 {
-    public abstract class GameStateServiceBase : Node
+    [GlobalClass]
+    public abstract class GameStateServiceBase : Node, IGameStateService
     {
-        public virtual string ServiceKey => GetType().Name;
+        public abstract string Name { get; }
 
         public override void _Ready()
         {
             base._Ready();
-            var registry = GetNode<ServiceRegistry>("../ServiceRegistry");
-            if(registry == null)
+            var engine = GetNode<FlowEngine>("../ServiceRegistry");
+            if(engine == null)
             {
                 GD.PushError($"Service Registry not found");
                 return;
             }
 
-            registry.RegisterService(ServiceKey, this);
+            engine.RegisterService(this);
         }
     }
 }

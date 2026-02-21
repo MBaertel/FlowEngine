@@ -5,7 +5,7 @@ using System.Text;
 
 namespace FlowEngine.Integration.Services
 {
-    public interface IDecisionManager : IStateService
+    public interface IDecisionManager : IGameStateService
     {
         IDecisionProvider GetCurrent();
         void SetCurrent(IDecisionProvider decisionProvider);
