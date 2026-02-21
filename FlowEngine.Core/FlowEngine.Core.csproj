@@ -8,8 +8,6 @@
 
 	<PropertyGroup>
 		<PackageId>FlowEngine.Core</PackageId>
-		<Version>1.0.0</Version>
-		<Authors>Macroni</Authors>
 		<Description>Core Functionality</Description>
 	</PropertyGroup>
 

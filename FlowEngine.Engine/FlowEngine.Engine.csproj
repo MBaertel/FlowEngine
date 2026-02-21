@@ -8,8 +8,6 @@
 
 	<PropertyGroup>
 		<PackageId>FlowEngine.Engine</PackageId>
-		<Version>1.0.0</Version>
-		<Authors>Macroni</Authors>
 		<Description>Engine</Description>
 	</PropertyGroup>
 
