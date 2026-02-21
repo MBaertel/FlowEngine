@@ -3,7 +3,7 @@ name: Build & Publish NuGet Packages
 on:
   push:
     tags:
-      - "v*" # triggers on version tags like v1.0.0
+      - "*" # triggers on version tags like v1.0.0
 
 jobs:
   publish:
