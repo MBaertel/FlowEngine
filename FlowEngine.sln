@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowEngine.Engine", "FlowEn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowEngine.Integration.Godot", "FlowEngine.Integration.Godot\FlowEngine.Integration.Godot.csproj", "{16DDE46B-3B14-0879-56C8-FC5F42DC925E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowEngine.Integration", "FlowEngine.Steps\FlowEngine.Integration.csproj", "{73136E62-EDCA-CDDF-A117-5873A2A46EA2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowEngine.Integration", "FlowEngine.Integration\FlowEngine.Integration.csproj", "{73136E62-EDCA-CDDF-A117-5873A2A46EA2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowEngine.Tests", "FlowEngine.Tests\FlowEngine.Tests.csproj", "{A2C18873-CA9C-5C32-EDAD-03DBE0EE66D9}"
 EndProject
