@@ -1,7 +1,0 @@
-<Solution>
-  <Project Path="FlowEngine.Core/FlowEngine.Core.csproj" />
-  <Project Path="FlowEngine.Engine/FlowEngine.Engine.csproj" />
-  <Project Path="FlowEngine.Integration.Godot/FlowEngine.Integration.Godot.csproj" Id="8068bf1b-d94b-425e-880e-c3c0b74b0a9c" />
-  <Project Path="FlowEngine.Steps/FlowEngine.Integration.csproj" Id="3d86005b-36c8-4b1d-8af9-8a3821131122" />
-  <Project Path="FlowEngine.Tests/FlowEngine.Tests.csproj" Id="bb6394e9-56a7-4b2d-b989-c853ec4c7836" />
-</Solution>
